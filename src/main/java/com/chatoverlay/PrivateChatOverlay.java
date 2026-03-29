@@ -196,9 +196,6 @@ public class PrivateChatOverlay extends Overlay
 		graphics.setColor(new Color(bg.getRed(), bg.getGreen(), bg.getBlue(),
 			(int) (bg.getAlpha() * alpha)));
 		graphics.fillRoundRect(x, y, width, height, BORDER_RADIUS, BORDER_RADIUS);
-
-		graphics.setColor(new Color(255, 255, 255, (int) (50 * alpha)));
-		graphics.drawRoundRect(x, y, width, height, BORDER_RADIUS, BORDER_RADIUS);
 	}
 
 	private float computeAlpha(long ageMs, long durMs)

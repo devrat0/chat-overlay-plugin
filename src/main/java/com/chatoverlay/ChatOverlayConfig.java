@@ -61,10 +61,49 @@ public interface ChatOverlayConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "bubblePaddingX",
+		name = "Bubble Padding (Horizontal)",
+		description = "Left and right padding in pixels between the text and the bubble edge",
+		position = 1,
+		section = "general"
+	)
+	@Range(min = 0, max = 30)
+	default int bubblePaddingX()
+	{
+		return 10;
+	}
+
+	@ConfigItem(
+		keyName = "bubblePaddingY",
+		name = "Bubble Padding (Vertical)",
+		description = "Top and bottom padding in pixels between the text and the bubble edge",
+		position = 2,
+		section = "general"
+	)
+	@Range(min = 0, max = 20)
+	default int bubblePaddingY()
+	{
+		return 5;
+	}
+
+	@ConfigItem(
+		keyName = "bubbleSpacing",
+		name = "Bubble Spacing",
+		description = "Gap in pixels between consecutive chat bubbles",
+		position = 3,
+		section = "general"
+	)
+	@Range(min = 0, max = 20)
+	default int bubbleSpacing()
+	{
+		return 4;
+	}
+
+	@ConfigItem(
 		keyName = "fontType",
 		name = "Font",
 		description = "Font used for all chat overlays",
-		position = 1,
+		position = 4,
 		section = "general"
 	)
 	default FontType fontType()
@@ -172,7 +211,7 @@ public interface ChatOverlayConfig extends Config
 	@Alpha
 	default Color publicBgColor()
 	{
-		return new Color(0, 0, 0, 140);
+		return new Color(30, 30, 30, 200);
 	}
 
 	@ConfigItem(
@@ -276,7 +315,7 @@ public interface ChatOverlayConfig extends Config
 	@Alpha
 	default Color privateBgColor()
 	{
-		return new Color(20, 0, 40, 160);
+		return new Color(30, 30, 30, 200);
 	}
 
 	@ConfigItem(
