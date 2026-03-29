@@ -155,6 +155,10 @@ public class GameOverlay extends Overlay
 		{
 			ChatLine alert = alerts.get(i);
 			float alpha = computeAlpha(alert.getAge(), durationMs);
+			if (!config.systemFadeMessages() && alpha > 0f)
+			{
+				alpha = 1.0f;
+			}
 			if (alpha <= 0.01f)
 			{
 				continue;
@@ -247,6 +251,10 @@ public class GameOverlay extends Overlay
 		{
 			ChatLine alert = alerts.get(i);
 			float alpha = computeAlpha(alert.getAge(), durationMs);
+			if (!config.systemFadeMessages() && alpha > 0f)
+			{
+				alpha = 1.0f;
+			}
 			if (alpha <= 0.01f)
 			{
 				continue;

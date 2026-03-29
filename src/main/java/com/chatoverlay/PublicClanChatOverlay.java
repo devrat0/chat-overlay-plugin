@@ -86,6 +86,10 @@ public class PublicClanChatOverlay extends Overlay
 		for (ChatLine line : messages)
 		{
 			float alpha = computeAlpha(line.getAge(), durMs);
+			if (!config.publicFadeMessages() && alpha > 0f)
+			{
+				alpha = 1.0f;
+			}
 			if (alpha <= 0.01f)
 			{
 				continue;
