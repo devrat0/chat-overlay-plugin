@@ -52,7 +52,7 @@ public class PrivateChatOverlay extends Overlay
 			return null;
 		}
 
-		if (config.hideWhenChatboxOpen() && plugin.isChatboxOpen())
+		if (config.privateHideWhenChatboxOpen() && plugin.isChatboxOpen())
 		{
 			return null;
 		}

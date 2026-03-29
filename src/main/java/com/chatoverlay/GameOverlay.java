@@ -59,7 +59,7 @@ public class GameOverlay extends Overlay
 			return null;
 		}
 
-		if (config.hideWhenChatboxOpen() && plugin.isChatboxOpen())
+		if (config.systemHideWhenChatboxOpen() && plugin.isChatboxOpen())
 		{
 			return null;
 		}

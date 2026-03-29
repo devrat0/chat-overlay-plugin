@@ -51,7 +51,7 @@ public class PublicClanChatOverlay extends Overlay
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
-		if (config.hideWhenChatboxOpen() && plugin.isChatboxOpen())
+		if (config.publicHideWhenChatboxOpen() && plugin.isChatboxOpen())
 		{
 			return null;
 		}
