@@ -25,9 +25,6 @@ import net.runelite.client.ui.overlay.OverlayPosition;
  */
 public class GameOverlay extends Overlay
 {
-	private static final int PADDING_X        = 10;
-	private static final int PADDING_Y        = 5;
-	private static final int BUBBLE_SPACING   = 4;
 	private static final int BORDER_RADIUS    = 12;
 	private static final int ABOVE_PLAYER_OFFSET = 90;
 	private static final int MAX_BUBBLE_WIDTH = 350;
@@ -146,6 +143,10 @@ public class GameOverlay extends Overlay
 			return null;
 		}
 
+		int paddingX      = config.bubblePaddingX();
+		int paddingY      = config.bubblePaddingY();
+		int bubbleSpacing = config.bubbleSpacing();
+
 		java.awt.geom.AffineTransform tx = graphics.getTransform();
 		int centerX  = anchor.getX() - (int) tx.getTranslateX();
 		int currentY = anchor.getY() - (int) tx.getTranslateY();
@@ -170,13 +171,13 @@ public class GameOverlay extends Overlay
 			builder.append(alert.getRawMessage());
 			List<ColorSegment> segments = builder.getSegments();
 			String plain      = builder.toPlainString();
-			int    innerWidth = MAX_BUBBLE_WIDTH - PADDING_X * 2;
+			int    innerWidth = MAX_BUBBLE_WIDTH - paddingX * 2;
 			List<ColorSegment> faded = applyAlphaToSegments(segments, alpha);
 
 			int bubbleWidth;
 			int bubbleHeight;
 
-			if (config.wordWrap())
+			if (config.systemWordWrap())
 			{
 				List<int[]> lineRanges = wrapText(plain, fm, innerWidth);
 				if (lineRanges.isEmpty())
@@ -188,14 +189,14 @@ public class GameOverlay extends Overlay
 				{
 					maxLineW = Math.max(maxLineW, fm.stringWidth(plain.substring(range[0], range[1])));
 				}
-				bubbleWidth  = maxLineW + PADDING_X * 2;
-				bubbleHeight = fm.getHeight() * lineRanges.size() + PADDING_Y * 2;
+				bubbleWidth  = maxLineW + paddingX * 2;
+				bubbleHeight = fm.getHeight() * lineRanges.size() + paddingY * 2;
 				int bubbleX  = centerX - bubbleWidth / 2;
 				int bubbleY  = currentY - bubbleHeight;
 
 				drawBubble(graphics, bubbleX, bubbleY, bubbleWidth, bubbleHeight, alpha);
 
-				int textY = bubbleY + PADDING_Y + fm.getAscent();
+				int textY = bubbleY + paddingY + fm.getAscent();
 				for (int[] range : lineRanges)
 				{
 					List<ColorSegment> lineSegs = sliceSegments(faded, range[0], range[1]);
@@ -204,22 +205,22 @@ public class GameOverlay extends Overlay
 					renderSegments(graphics, lineSegs, textStartX, textY, fm, textStartX + lineW);
 					textY += fm.getHeight();
 				}
-				currentY = bubbleY - BUBBLE_SPACING;
+				currentY = bubbleY - bubbleSpacing;
 			}
 			else
 			{
 				int textWidth = Math.min(fm.stringWidth(plain), innerWidth);
-				bubbleWidth  = textWidth + PADDING_X * 2;
-				bubbleHeight = fm.getHeight() + PADDING_Y * 2;
+				bubbleWidth  = textWidth + paddingX * 2;
+				bubbleHeight = fm.getHeight() + paddingY * 2;
 				int bubbleX  = centerX - bubbleWidth / 2;
 				int bubbleY  = currentY - bubbleHeight;
 
 				drawBubble(graphics, bubbleX, bubbleY, bubbleWidth, bubbleHeight, alpha);
 
-				int textY      = bubbleY + PADDING_Y + fm.getAscent();
+				int textY      = bubbleY + paddingY + fm.getAscent();
 				int textStartX = centerX - textWidth / 2;
 				renderSegments(graphics, faded, textStartX, textY, fm, textStartX + textWidth);
-				currentY = bubbleY - BUBBLE_SPACING;
+				currentY = bubbleY - bubbleSpacing;
 			}
 		}
 
@@ -234,6 +235,10 @@ public class GameOverlay extends Overlay
 	private Dimension renderAsOverlay(
 		Graphics2D graphics, List<ChatLine> alerts, FontMetrics fm, long durationMs)
 	{
+		int paddingX      = config.bubblePaddingX();
+		int paddingY      = config.bubblePaddingY();
+		int bubbleSpacing = config.bubbleSpacing();
+
 		int y          = 0;
 		int totalWidth = 0;
 
@@ -258,13 +263,13 @@ public class GameOverlay extends Overlay
 			builder.append(alert.getRawMessage());
 			List<ColorSegment> segments = builder.getSegments();
 			String plain      = builder.toPlainString();
-			int    innerWidth = MAX_BUBBLE_WIDTH - PADDING_X * 2;
+			int    innerWidth = MAX_BUBBLE_WIDTH - paddingX * 2;
 			List<ColorSegment> faded = applyAlphaToSegments(segments, alpha);
 
 			int bubbleWidth;
 			int bubbleHeight;
 
-			if (config.wordWrap())
+			if (config.systemWordWrap())
 			{
 				List<int[]> lineRanges = wrapText(plain, fm, innerWidth);
 				if (lineRanges.isEmpty())
@@ -276,37 +281,37 @@ public class GameOverlay extends Overlay
 				{
 					maxLineW = Math.max(maxLineW, fm.stringWidth(plain.substring(range[0], range[1])));
 				}
-				bubbleWidth  = maxLineW + PADDING_X * 2;
-				bubbleHeight = fm.getHeight() * lineRanges.size() + PADDING_Y * 2;
+				bubbleWidth  = maxLineW + paddingX * 2;
+				bubbleHeight = fm.getHeight() * lineRanges.size() + paddingY * 2;
 
 				drawBubble(graphics, 0, y, bubbleWidth, bubbleHeight, alpha);
 
-				int textY = y + PADDING_Y + fm.getAscent();
+				int textY = y + paddingY + fm.getAscent();
 				for (int[] range : lineRanges)
 				{
 					List<ColorSegment> lineSegs = sliceSegments(faded, range[0], range[1]);
 					int lineW = fm.stringWidth(plain.substring(range[0], range[1]));
-					renderSegments(graphics, lineSegs, PADDING_X, textY, fm, PADDING_X + lineW);
+					renderSegments(graphics, lineSegs, paddingX, textY, fm, paddingX + lineW);
 					textY += fm.getHeight();
 				}
 			}
 			else
 			{
 				int textWidth = Math.min(fm.stringWidth(plain), innerWidth);
-				bubbleWidth  = textWidth + PADDING_X * 2;
-				bubbleHeight = fm.getHeight() + PADDING_Y * 2;
+				bubbleWidth  = textWidth + paddingX * 2;
+				bubbleHeight = fm.getHeight() + paddingY * 2;
 
 				drawBubble(graphics, 0, y, bubbleWidth, bubbleHeight, alpha);
 
-				int textY = y + PADDING_Y + fm.getAscent();
-				renderSegments(graphics, faded, PADDING_X, textY, fm, PADDING_X + textWidth);
+				int textY = y + paddingY + fm.getAscent();
+				renderSegments(graphics, faded, paddingX, textY, fm, paddingX + textWidth);
 			}
 
 			if (bubbleWidth > totalWidth)
 			{
 				totalWidth = bubbleWidth;
 			}
-			y += bubbleHeight + BUBBLE_SPACING;
+			y += bubbleHeight + bubbleSpacing;
 		}
 
 		if (y == 0)
