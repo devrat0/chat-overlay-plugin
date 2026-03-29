@@ -127,20 +127,50 @@ public class PublicClanChatOverlay extends Overlay
 
 			List<ColorSegment> allSegs = builder.getSegments();
 
-			// Measure plain-text width, cap at overlay width
-			String plain = builder.toPlainString();
-			int textWidth    = Math.min(fm.stringWidth(plain), maxWidth - PADDING_X * 2);
-			int bubbleWidth  = textWidth + PADDING_X * 2;
-			int bubbleHeight = fm.getHeight() + PADDING_Y * 2;
-
-			// Bubble background
-			drawBubble(graphics, 0, y, bubbleWidth, bubbleHeight, alpha);
-
-			// Text inside bubble
-			int textY = y + PADDING_Y + fm.getAscent();
+			String plain      = builder.toPlainString();
+			int    innerWidth = maxWidth - PADDING_X * 2;
 			List<ColorSegment> faded = applyAlphaToSegments(allSegs, alpha);
-			renderSegments(graphics, faded, PADDING_X, textY, fm,
-				PADDING_X + textWidth);
+
+			int bubbleWidth;
+			int bubbleHeight;
+
+			if (config.wordWrap())
+			{
+				List<int[]> lineRanges = wrapText(plain, fm, innerWidth);
+				if (lineRanges.isEmpty())
+				{
+					continue;
+				}
+				int maxLineW = 0;
+				for (int[] range : lineRanges)
+				{
+					maxLineW = Math.max(maxLineW, fm.stringWidth(plain.substring(range[0], range[1])));
+				}
+				bubbleWidth  = maxLineW + PADDING_X * 2;
+				bubbleHeight = fm.getHeight() * lineRanges.size() + PADDING_Y * 2;
+
+				drawBubble(graphics, 0, y, bubbleWidth, bubbleHeight, alpha);
+
+				int textY = y + PADDING_Y + fm.getAscent();
+				for (int[] range : lineRanges)
+				{
+					List<ColorSegment> lineSegs = sliceSegments(faded, range[0], range[1]);
+					int lineW = fm.stringWidth(plain.substring(range[0], range[1]));
+					renderSegments(graphics, lineSegs, PADDING_X, textY, fm, PADDING_X + lineW);
+					textY += fm.getHeight();
+				}
+			}
+			else
+			{
+				int textWidth = Math.min(fm.stringWidth(plain), innerWidth);
+				bubbleWidth  = textWidth + PADDING_X * 2;
+				bubbleHeight = fm.getHeight() + PADDING_Y * 2;
+
+				drawBubble(graphics, 0, y, bubbleWidth, bubbleHeight, alpha);
+
+				int textY = y + PADDING_Y + fm.getAscent();
+				renderSegments(graphics, faded, PADDING_X, textY, fm, PADDING_X + textWidth);
+			}
 
 			if (bubbleWidth > totalWidth)
 			{
@@ -262,6 +292,95 @@ public class PublicClanChatOverlay extends Overlay
 		}
 
 		return x;
+	}
+
+	/**
+	 * Returns a list of [start, end) char ranges in {@code text} that fit within
+	 * {@code maxWidth} pixels, breaking on word boundaries where possible.
+	 */
+	private java.util.List<int[]> wrapText(String text, FontMetrics fm, int maxWidth)
+	{
+		java.util.List<int[]> lines = new java.util.ArrayList<>();
+		if (text.isEmpty())
+		{
+			return lines;
+		}
+		if (fm.stringWidth(text) <= maxWidth)
+		{
+			lines.add(new int[]{0, text.length()});
+			return lines;
+		}
+		int lineStart  = 0;
+		int lastSpace  = -1;
+		int i          = lineStart;
+		while (i < text.length())
+		{
+			if (text.charAt(i) == ' ')
+			{
+				lastSpace = i;
+			}
+			if (fm.stringWidth(text.substring(lineStart, i + 1)) > maxWidth)
+			{
+				if (lastSpace > lineStart)
+				{
+					lines.add(new int[]{lineStart, lastSpace});
+					lineStart = lastSpace + 1;
+					lastSpace = -1;
+					i = lineStart;
+				}
+				else
+				{
+					// No break point — force-break before this char (or include it if first)
+					int breakAt = i > lineStart ? i : i + 1;
+					lines.add(new int[]{lineStart, breakAt});
+					lineStart = breakAt;
+					lastSpace = -1;
+					i = lineStart;
+				}
+			}
+			else
+			{
+				i++;
+			}
+		}
+		if (lineStart < text.length())
+		{
+			lines.add(new int[]{lineStart, text.length()});
+		}
+		return lines;
+	}
+
+	/**
+	 * Extracts the sub-segments of {@code segments} that correspond to
+	 * chars [{@code start}, {@code end}) of the original plain text.
+	 */
+	private java.util.List<ColorSegment> sliceSegments(
+		java.util.List<ColorSegment> segments, int start, int end)
+	{
+		java.util.List<ColorSegment> result = new java.util.ArrayList<>();
+		int pos = 0;
+		for (ColorSegment seg : segments)
+		{
+			String text   = seg.getText();
+			int    segEnd = pos + text.length();
+			if (segEnd <= start)
+			{
+				pos = segEnd;
+				continue;
+			}
+			if (pos >= end)
+			{
+				break;
+			}
+			int from = Math.max(0, start - pos);
+			int to   = Math.min(text.length(), end - pos);
+			if (from < to)
+			{
+				result.add(new ColorSegment(text.substring(from, to), seg.getColor()));
+			}
+			pos = segEnd;
+		}
+		return result;
 	}
 
 	private String clipIfNeeded(String text, FontMetrics fm, int availableWidth)

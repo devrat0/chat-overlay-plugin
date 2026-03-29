@@ -48,10 +48,23 @@ public interface ChatOverlayConfig extends Config
 	// ──────────────────────────────────────────────
 
 	@ConfigItem(
+		keyName = "wordWrap",
+		name = "Word Wrap",
+		description = "When on, long messages wrap across multiple lines inside the bubble. "
+			+ "When off, messages are truncated to a single line with an ellipsis.",
+		position = 0,
+		section = "general"
+	)
+	default boolean wordWrap()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "fontType",
 		name = "Font",
 		description = "Font used for all chat overlays",
-		position = 0,
+		position = 1,
 		section = "general"
 	)
 	default FontType fontType()
@@ -63,7 +76,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "fontSize",
 		name = "Font Size",
 		description = "Font size for all chat overlays",
-		position = 1,
+		position = 2,
 		section = "general"
 	)
 	@Range(min = 8, max = 48)
