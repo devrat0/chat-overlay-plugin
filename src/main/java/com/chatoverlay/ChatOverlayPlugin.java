@@ -10,6 +10,7 @@ import net.runelite.api.FriendsChatManager;
 import net.runelite.api.GameState;
 import net.runelite.api.Varbits;
 import net.runelite.api.clan.ClanChannel;
+import net.runelite.api.VarClientStr;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
@@ -80,6 +81,23 @@ public class ChatOverlayPlugin extends Plugin
 	{
 		net.runelite.api.Player p = client.getLocalPlayer();
 		return p != null ? p.getName() : null;
+	}
+
+	/**
+	 * Returns whatever the player is currently typing in the chatbox,
+	 * or an empty string if the chatbox input is idle.
+	 */
+	public String getChatboxTypedText()
+	{
+		try
+		{
+			String text = client.getVarcStrValue(VarClientStr.CHATBOX_TYPED_TEXT);
+			return text != null ? text : "";
+		}
+		catch (Exception e)
+		{
+			return "";
+		}
 	}
 
 	/**

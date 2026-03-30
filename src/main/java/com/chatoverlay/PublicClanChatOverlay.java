@@ -183,6 +183,80 @@ public class PublicClanChatOverlay extends Overlay
 			y += bubbleHeight + bubbleSpacing;
 		}
 
+		// ── Chatbox typing bubble ──────────────────────────────────────────
+		if (config.showChatboxMessage())
+		{
+			String typedText = plugin.getChatboxTypedText();
+			if (!typedText.isEmpty())
+			{
+				String localName = plugin.getLocalPlayerName();
+				String displayName = (localName != null && !localName.isEmpty()) ? localName : "You";
+
+				Color typingSenderColor = new Color(255, 255, 255);
+				Color typingMsgColor    = new Color(255, 255, 0);
+
+				ChatLineBuilder typingBuilder = new ChatLineBuilder(typingMsgColor, plugin.getChatColorConfig());
+				typingBuilder.append(displayName + ": ", typingSenderColor);
+				typingBuilder.append(typedText);
+
+				List<ColorSegment> typingSegs = typingBuilder.getSegments();
+				String typingPlain = typingBuilder.toPlainString();
+				int innerWidth = maxWidth - paddingX * 2;
+
+				int bubbleWidth;
+				int bubbleHeight;
+
+				if (config.publicWordWrap())
+				{
+					List<int[]> lineRanges = wrapText(typingPlain, fm, innerWidth);
+					if (!lineRanges.isEmpty())
+					{
+						int maxLineW = 0;
+						for (int[] range : lineRanges)
+						{
+							maxLineW = Math.max(maxLineW, fm.stringWidth(typingPlain.substring(range[0], range[1])));
+						}
+						bubbleWidth  = maxLineW + paddingX * 2;
+						bubbleHeight = fm.getHeight() * lineRanges.size() + paddingY * 2;
+
+						drawBubble(graphics, 0, y, bubbleWidth, bubbleHeight, 1.0f);
+
+						int textY = y + paddingY + fm.getAscent();
+						for (int[] range : lineRanges)
+						{
+							List<ColorSegment> lineSegs = sliceSegments(typingSegs, range[0], range[1]);
+							int lineW = fm.stringWidth(typingPlain.substring(range[0], range[1]));
+							renderSegments(graphics, lineSegs, paddingX, textY, fm, paddingX + lineW);
+							textY += fm.getHeight();
+						}
+
+						if (bubbleWidth > totalWidth)
+						{
+							totalWidth = bubbleWidth;
+						}
+						y += bubbleHeight + bubbleSpacing;
+					}
+				}
+				else
+				{
+					int textWidth = Math.min(fm.stringWidth(typingPlain), innerWidth);
+					bubbleWidth  = textWidth + paddingX * 2;
+					bubbleHeight = fm.getHeight() + paddingY * 2;
+
+					drawBubble(graphics, 0, y, bubbleWidth, bubbleHeight, 1.0f);
+
+					int textY = y + paddingY + fm.getAscent();
+					renderSegments(graphics, typingSegs, paddingX, textY, fm, paddingX + textWidth);
+
+					if (bubbleWidth > totalWidth)
+					{
+						totalWidth = bubbleWidth;
+					}
+					y += bubbleHeight + bubbleSpacing;
+				}
+			}
+		}
+
 		if (y == 0)
 		{
 			return null;

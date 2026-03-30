@@ -111,6 +111,18 @@ public interface ChatOverlayConfig extends Config
 		return 15;
 	}
 
+	@ConfigItem(
+		keyName = "showChatboxMessage",
+		name = "Show Chatbox Message",
+		description = "Display a bubble under the main chat overlay showing what you are currently typing",
+		position = 5,
+		section = "general"
+	)
+	default boolean showChatboxMessage()
+	{
+		return true;
+	}
+
 	// ──────────────────────────────────────────────
 	//  MAIN CHAT  (bottom-left)
 	// ──────────────────────────────────────────────
