@@ -1,5 +1,6 @@
 package com.chatoverlay;
 
+import java.awt.image.BufferedImage;
 import net.runelite.api.ChatMessageType;
 
 /**
@@ -26,6 +27,9 @@ public class ChatLine
 
 	/** The clan or FC channel name (e.g. "Laced PVM"), or null for non-channel messages. */
 	private final String channelName;
+
+	/** Ironman/JMOD icon to display before the sender name, or null if none. Set asynchronously after sprite loading. */
+	private volatile BufferedImage icon;
 
 	public ChatLine(
 		String sender,
@@ -107,6 +111,16 @@ public class ChatLine
 	public long getAge()
 	{
 		return System.currentTimeMillis() - timestamp;
+	}
+
+	public BufferedImage getIcon()
+	{
+		return icon;
+	}
+ 
+	void setIcon(BufferedImage icon)
+	{
+		this.icon = icon;
 	}
 
 }

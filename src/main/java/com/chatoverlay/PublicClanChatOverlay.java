@@ -1,11 +1,15 @@
 package com.chatoverlay;
 
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Composite;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
 import java.time.Instant;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -86,7 +90,7 @@ public class PublicClanChatOverlay extends Overlay
 		for (ChatLine line : messages)
 		{
 			float alpha = computeAlpha(line.getAge(), durMs);
-			if (!config.publicFadeMessages() && alpha > 0f)
+			if (plugin.isPeekActive() || (!config.publicFadeMessages() && alpha > 0f))
 			{
 				alpha = 1.0f;
 			}
@@ -103,16 +107,28 @@ public class PublicClanChatOverlay extends Overlay
 			Color senderColor = plugin.getSenderColor(line.getChatMessageType(), ChatColorType.NORMAL, isSender);
 			Color msgColor    = plugin.getChatColor(line.getChatMessageType(), ChatColorType.HIGHLIGHT);
 
-			ChatLineBuilder builder = new ChatLineBuilder(msgColor, plugin.getChatColorConfig());
-
-			// Timestamp: [HH:MM] prefix in sender color (optional)
+			// Timestamp: [HH:MM] rendered separately so order is [timestamp] [icon] username
+			String timestampStr   = "";
+			int    timestampWidth = 0;
 			if (config.publicShowTimestamp())
 			{
 				LocalTime time = LocalTime.ofInstant(
 					Instant.ofEpochMilli(line.getTimestamp()), ZoneId.systemDefault());
-				builder.append(String.format("[%02d:%02d] ", time.getHour(), time.getMinute()),
-					senderColor);
+				timestampStr  = String.format("[%02d:%02d] ", time.getHour(), time.getMinute());
+				timestampWidth = fm.stringWidth(timestampStr);
 			}
+
+			// Icon sits between timestamp and sender name
+			BufferedImage icon = config.showPlayerIcons() ? line.getIcon() : null;
+			int iconOffsetX = 0;
+			if (icon != null)
+			{
+				int iconH = fm.getHeight();
+				int iconW = (int) ((double) icon.getWidth() * iconH / icon.getHeight());
+				iconOffsetX = iconW + 4;
+			}
+
+			ChatLineBuilder builder = new ChatLineBuilder(msgColor, plugin.getChatColorConfig());
 
 			// Channel prefix: real clan/FC name, e.g. "[Laced PVM] "
 			// Use the dedicated channel-name color from ChatColorConfig.
@@ -132,11 +148,12 @@ public class PublicClanChatOverlay extends Overlay
 			List<ColorSegment> allSegs = builder.getSegments();
 
 			String plain      = builder.toPlainString();
-			int    innerWidth = maxWidth - paddingX * 2;
+			int    innerWidth = maxWidth - paddingX * 2 - timestampWidth - iconOffsetX;
 			List<ColorSegment> faded = applyAlphaToSegments(allSegs, alpha);
 
 			int bubbleWidth;
 			int bubbleHeight;
+			int textStartX = paddingX + timestampWidth + iconOffsetX;
 
 			if (config.publicWordWrap())
 			{
@@ -150,30 +167,74 @@ public class PublicClanChatOverlay extends Overlay
 				{
 					maxLineW = Math.max(maxLineW, fm.stringWidth(plain.substring(range[0], range[1])));
 				}
-				bubbleWidth  = maxLineW + paddingX * 2;
+				bubbleWidth  = maxLineW + timestampWidth + iconOffsetX + paddingX * 2;
 				bubbleHeight = fm.getHeight() * lineRanges.size() + paddingY * 2;
 
 				drawBubble(graphics, 0, y, bubbleWidth, bubbleHeight, alpha);
+				drawBubbleBorderIfNeeded(graphics, 0, y, bubbleWidth, bubbleHeight, alpha);
 
 				int textY = y + paddingY + fm.getAscent();
+
+				if (!timestampStr.isEmpty())
+				{
+					Color tc = new Color(senderColor.getRed(), senderColor.getGreen(),
+						senderColor.getBlue(), (int) (senderColor.getAlpha() * alpha));
+					graphics.setColor(new Color(0, 0, 0, tc.getAlpha()));
+					graphics.drawString(timestampStr, paddingX + 1, textY + 1);
+					graphics.setColor(tc);
+					graphics.drawString(timestampStr, paddingX, textY);
+				}
+
+				if (icon != null)
+				{
+					int iconH = fm.getHeight();
+					int iconW = iconOffsetX - 4;
+					Composite orig = graphics.getComposite();
+					graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+					graphics.drawImage(icon, paddingX + timestampWidth, y + paddingY, iconW, iconH, null);
+					graphics.setComposite(orig);
+				}
+
 				for (int[] range : lineRanges)
 				{
 					List<ColorSegment> lineSegs = sliceSegments(faded, range[0], range[1]);
 					int lineW = fm.stringWidth(plain.substring(range[0], range[1]));
-					renderSegments(graphics, lineSegs, paddingX, textY, fm, paddingX + lineW);
+					renderSegments(graphics, lineSegs, textStartX, textY, fm, textStartX + lineW);
 					textY += fm.getHeight();
 				}
 			}
 			else
 			{
 				int textWidth = Math.min(fm.stringWidth(plain), innerWidth);
-				bubbleWidth  = textWidth + paddingX * 2;
+				bubbleWidth  = textWidth + timestampWidth + iconOffsetX + paddingX * 2;
 				bubbleHeight = fm.getHeight() + paddingY * 2;
 
 				drawBubble(graphics, 0, y, bubbleWidth, bubbleHeight, alpha);
+				drawBubbleBorderIfNeeded(graphics, 0, y, bubbleWidth, bubbleHeight, alpha);
 
 				int textY = y + paddingY + fm.getAscent();
-				renderSegments(graphics, faded, paddingX, textY, fm, paddingX + textWidth);
+
+				if (!timestampStr.isEmpty())
+				{
+					Color tc = new Color(senderColor.getRed(), senderColor.getGreen(),
+						senderColor.getBlue(), (int) (senderColor.getAlpha() * alpha));
+					graphics.setColor(new Color(0, 0, 0, tc.getAlpha()));
+					graphics.drawString(timestampStr, paddingX + 1, textY + 1);
+					graphics.setColor(tc);
+					graphics.drawString(timestampStr, paddingX, textY);
+				}
+
+				if (icon != null)
+				{
+					int iconH = fm.getHeight();
+					int iconW = iconOffsetX - 4;
+					Composite orig = graphics.getComposite();
+					graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+					graphics.drawImage(icon, paddingX + timestampWidth, y + paddingY, iconW, iconH, null);
+					graphics.setComposite(orig);
+				}
+
+				renderSegments(graphics, faded, textStartX, textY, fm, textStartX + textWidth);
 			}
 
 			if (bubbleWidth > totalWidth)
@@ -285,6 +346,23 @@ public class PublicClanChatOverlay extends Overlay
 		graphics.setColor(new Color(bg.getRed(), bg.getGreen(), bg.getBlue(),
 			(int) (bg.getAlpha() * alpha)));
 		graphics.fillRoundRect(x, y, width, height, BORDER_RADIUS, BORDER_RADIUS);
+	}
+
+	private void drawBubbleBorderIfNeeded(Graphics2D graphics,
+		int x, int y, int width, int height, float alpha)
+	{
+		boolean showBorder = config.publicShowBubbleBorder() || plugin.isPeekActive();
+		if (!showBorder)
+		{
+			return;
+		}
+		Color bc = plugin.isPeekActive()
+			? new Color(255, 200, 0, 220)
+			: config.publicBubbleBorderColor();
+		graphics.setColor(new Color(bc.getRed(), bc.getGreen(), bc.getBlue(),
+			Math.min(255, (int) (bc.getAlpha() * alpha))));
+		graphics.setStroke(new BasicStroke(1f));
+		graphics.drawRoundRect(x, y, width - 1, height - 1, BORDER_RADIUS, BORDER_RADIUS);
 	}
 
 	// Channel prefix is now read from line.getChannelName() — no more hardcoded labels.

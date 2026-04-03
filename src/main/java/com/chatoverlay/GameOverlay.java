@@ -1,5 +1,6 @@
 package com.chatoverlay;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -155,7 +156,7 @@ public class GameOverlay extends Overlay
 		{
 			ChatLine alert = alerts.get(i);
 			float alpha = computeAlpha(alert.getAge(), durationMs);
-			if (!config.systemFadeMessages() && alpha > 0f)
+			if (plugin.isPeekActive() || (!config.systemFadeMessages() && alpha > 0f))
 			{
 				alpha = 1.0f;
 			}
@@ -199,6 +200,7 @@ public class GameOverlay extends Overlay
 				int bubbleY  = currentY - bubbleHeight;
 
 				drawBubble(graphics, bubbleX, bubbleY, bubbleWidth, bubbleHeight, alpha);
+				drawBubbleBorderIfNeeded(graphics, bubbleX, bubbleY, bubbleWidth, bubbleHeight, alpha);
 
 				int textY = bubbleY + paddingY + fm.getAscent();
 				for (int[] range : lineRanges)
@@ -220,6 +222,7 @@ public class GameOverlay extends Overlay
 				int bubbleY  = currentY - bubbleHeight;
 
 				drawBubble(graphics, bubbleX, bubbleY, bubbleWidth, bubbleHeight, alpha);
+				drawBubbleBorderIfNeeded(graphics, bubbleX, bubbleY, bubbleWidth, bubbleHeight, alpha);
 
 				int textY      = bubbleY + paddingY + fm.getAscent();
 				int textStartX = centerX - textWidth / 2;
@@ -251,7 +254,7 @@ public class GameOverlay extends Overlay
 		{
 			ChatLine alert = alerts.get(i);
 			float alpha = computeAlpha(alert.getAge(), durationMs);
-			if (!config.systemFadeMessages() && alpha > 0f)
+			if (plugin.isPeekActive() || (!config.systemFadeMessages() && alpha > 0f))
 			{
 				alpha = 1.0f;
 			}
@@ -293,6 +296,7 @@ public class GameOverlay extends Overlay
 				bubbleHeight = fm.getHeight() * lineRanges.size() + paddingY * 2;
 
 				drawBubble(graphics, 0, y, bubbleWidth, bubbleHeight, alpha);
+				drawBubbleBorderIfNeeded(graphics, 0, y, bubbleWidth, bubbleHeight, alpha);
 
 				int textY = y + paddingY + fm.getAscent();
 				for (int[] range : lineRanges)
@@ -310,6 +314,7 @@ public class GameOverlay extends Overlay
 				bubbleHeight = fm.getHeight() + paddingY * 2;
 
 				drawBubble(graphics, 0, y, bubbleWidth, bubbleHeight, alpha);
+				drawBubbleBorderIfNeeded(graphics, 0, y, bubbleWidth, bubbleHeight, alpha);
 
 				int textY = y + paddingY + fm.getAscent();
 				renderSegments(graphics, faded, paddingX, textY, fm, paddingX + textWidth);
@@ -338,6 +343,23 @@ public class GameOverlay extends Overlay
 		graphics.setColor(new Color(bg.getRed(), bg.getGreen(), bg.getBlue(),
 			(int) (bg.getAlpha() * alpha)));
 		graphics.fillRoundRect(x, y, width, height, BORDER_RADIUS, BORDER_RADIUS);
+	}
+
+	private void drawBubbleBorderIfNeeded(Graphics2D graphics,
+		int x, int y, int width, int height, float alpha)
+	{
+		boolean showBorder = config.systemShowBubbleBorder() || plugin.isPeekActive();
+		if (!showBorder)
+		{
+			return;
+		}
+		Color bc = plugin.isPeekActive()
+			? new Color(255, 200, 0, 220)
+			: config.systemBubbleBorderColor();
+		graphics.setColor(new Color(bc.getRed(), bc.getGreen(), bc.getBlue(),
+			Math.min(255, (int) (bc.getAlpha() * alpha))));
+		graphics.setStroke(new BasicStroke(1f));
+		graphics.drawRoundRect(x, y, width - 1, height - 1, BORDER_RADIUS, BORDER_RADIUS);
 	}
 
 	/**

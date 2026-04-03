@@ -13,7 +13,6 @@ import net.runelite.api.clan.ClanChannel;
 import net.runelite.api.VarClientStr;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
-import net.runelite.api.events.GameTick;
 import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.VarbitID;
@@ -21,15 +20,19 @@ import net.runelite.client.chat.ChatColorType;
 import net.runelite.client.config.ChatColorConfig;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
+import net.runelite.api.IndexedSprite;
+import net.runelite.client.input.KeyManager;
+import net.runelite.client.util.HotkeyListener;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.JagexColors;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.Text;
+import net.runelite.api.Player;
 import net.runelite.api.widgets.Widget;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 @PluginDescriptor(
@@ -53,6 +56,9 @@ public class ChatOverlayPlugin extends Plugin
 	private OverlayManager overlayManager;
 
 	@Inject
+	private KeyManager keyManager;
+
+	@Inject
 	private PublicClanChatOverlay publicClanOverlay;
 
 	@Inject
@@ -62,6 +68,12 @@ public class ChatOverlayPlugin extends Plugin
 	private GameOverlay systemAlertOverlay;
 
 	private final ChatMessageManager messageManager = new ChatMessageManager();
+	private final FilterMatcher filterMatcher = new FilterMatcher();
+
+	private volatile boolean peekActive = false;
+	private HotkeyListener peekListener;
+
+	private static final Pattern IMG_TAG = Pattern.compile("<img=(\\d+)>");
 
 	/**
 	 * Returns {@code true} when the in-game chatbox chat area is visible.
@@ -79,7 +91,7 @@ public class ChatOverlayPlugin extends Plugin
 
 	public String getLocalPlayerName()
 	{
-		net.runelite.api.Player p = client.getLocalPlayer();
+		Player p = client.getLocalPlayer();
 		return p != null ? p.getName() : null;
 	}
 
@@ -364,6 +376,22 @@ public class ChatOverlayPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
+		peekListener = new HotkeyListener(() -> config.peekKey())
+		{
+			@Override
+			public void hotkeyPressed()
+			{
+				peekActive = true;
+			}
+
+			@Override
+			public void hotkeyReleased()
+			{
+				peekActive = false;
+			}
+		};
+		keyManager.registerKeyListener(peekListener);
+
 		overlayManager.add(publicClanOverlay);
 		overlayManager.add(privateChatOverlay);
 		overlayManager.add(systemAlertOverlay);
@@ -373,6 +401,9 @@ public class ChatOverlayPlugin extends Plugin
 	@Override
 	protected void shutDown() throws Exception
 	{
+		keyManager.unregisterKeyListener(peekListener);
+		peekActive = false;
+
 		overlayManager.remove(publicClanOverlay);
 		overlayManager.remove(privateChatOverlay);
 		overlayManager.remove(systemAlertOverlay);
@@ -380,12 +411,9 @@ public class ChatOverlayPlugin extends Plugin
 		log.info("Chat Overlay plugin stopped");
 	}
 
-	@Subscribe
-	public void onGameTick(GameTick event)
+	public boolean isPeekActive()
 	{
-		messageManager.pruneSystemMessages(config.systemAlertDuration());
-		messageManager.prunePublicClanMessages(config.publicMessageDuration());
-		messageManager.prunePrivateMessages(config.privateMessageDuration());
+		return peekActive && config.peekEnabled();
 	}
 
 	@Subscribe
@@ -437,6 +465,15 @@ public class ChatOverlayPlugin extends Plugin
 		}
 	}
 
+	@Subscribe
+	public void onConfigChanged(ConfigChanged event)
+	{
+		if (!"chatoverlay".equals(event.getGroup()))
+		{
+			return;
+		}
+	}
+
 	/**
 	 * Priority -1 runs AFTER RuneLite's ChatColorPlugin (priority 0), which
 	 * injects {@code <col=RRGGBB>} tags into {@code messageNode.getName()} and
@@ -451,6 +488,7 @@ public class ChatOverlayPlugin extends Plugin
 		String rawSenderName = event.getMessageNode().getName();
 		String sender = sanitizeName(rawSenderName);
 		String rawMsg = event.getMessageNode().getValue();
+		String lower = ColorTagParser.stripTags(rawMsg).toLowerCase().trim();
 
 		switch (type)
 		{
@@ -461,11 +499,10 @@ public class ChatOverlayPlugin extends Plugin
 			case MODAUTOTYPER:
 				if (config.showPublicChat())
 				{
-					messageManager.addPublicClanMessage(
-						new ChatLine(sender, rawSenderName, rawMsg,
-							ChatCategory.PUBLIC, type),
-						config.publicMaxMessages()
-					);
+					ChatLine line = new ChatLine(sender, rawSenderName, rawMsg,
+						ChatCategory.PUBLIC, type);
+					resolveAndSetIcon(line, extractIconId(rawSenderName));
+					messageManager.addPublicClanMessage(line, config.publicMaxMessages());
 				}
 				break;
 
@@ -474,23 +511,19 @@ public class ChatOverlayPlugin extends Plugin
 			case CLAN_GIM_CHAT:
 				if (config.showClanChat())
 				{
-					messageManager.addPublicClanMessage(
-						new ChatLine(sender, rawSenderName, rawMsg,
-							ChatCategory.CLAN, type,
-							getClanChannelName()),
-						config.publicMaxMessages()
-					);
+					ChatLine line = new ChatLine(sender, rawSenderName, rawMsg,
+						ChatCategory.CLAN, type, getClanChannelName());
+					resolveAndSetIcon(line, extractIconId(rawSenderName));
+					messageManager.addPublicClanMessage(line, config.publicMaxMessages());
 				}
 				break;
 			case CLAN_GUEST_CHAT:
 				if (config.showClanChat())
 				{
-					messageManager.addPublicClanMessage(
-						new ChatLine(sender, rawSenderName, rawMsg,
-							ChatCategory.CLAN, type,
-							getGuestClanChannelName()),
-						config.publicMaxMessages()
-					);
+					ChatLine line = new ChatLine(sender, rawSenderName, rawMsg,
+						ChatCategory.CLAN, type, getGuestClanChannelName());
+					resolveAndSetIcon(line, extractIconId(rawSenderName));
+					messageManager.addPublicClanMessage(line, config.publicMaxMessages());
 				}
 				break;
 			case CLAN_MESSAGE:
@@ -500,12 +533,10 @@ public class ChatOverlayPlugin extends Plugin
 					String clanName = (type == ChatMessageType.CLAN_GUEST_MESSAGE)
 						? getGuestClanChannelName()
 						: getClanChannelName();
-					messageManager.addPublicClanMessage(
-						new ChatLine(sender, rawSenderName, rawMsg,
-							ChatCategory.CLAN, type,
-							clanName),
-						config.publicMaxMessages()
-					);
+					ChatLine line = new ChatLine(sender, rawSenderName, rawMsg,
+						ChatCategory.CLAN, type, clanName);
+					resolveAndSetIcon(line, extractIconId(rawSenderName));
+					messageManager.addPublicClanMessage(line, config.publicMaxMessages());
 				}
 				break;
 
@@ -513,12 +544,10 @@ public class ChatOverlayPlugin extends Plugin
 			case FRIENDSCHAT:
 				if (config.showFriendsChat())
 				{
-					messageManager.addPublicClanMessage(
-						new ChatLine(sender, rawSenderName, rawMsg,
-							ChatCategory.FRIENDS_CHAT, type,
-							getFriendsChatName()),
-						config.publicMaxMessages()
-					);
+					ChatLine line = new ChatLine(sender, rawSenderName, rawMsg,
+						ChatCategory.FRIENDS_CHAT, type, getFriendsChatName());
+					resolveAndSetIcon(line, extractIconId(rawSenderName));
+					messageManager.addPublicClanMessage(line, config.publicMaxMessages());
 				}
 				break;
 
@@ -528,6 +557,7 @@ public class ChatOverlayPlugin extends Plugin
 			{
 				ChatLine line = new ChatLine("From " + sender, "From " + rawSenderName, rawMsg,
 					ChatCategory.PRIVATE, type);
+				resolveAndSetIcon(line, extractIconId(rawSenderName));
 				if (config.showPrivateChat())
 				{
 					messageManager.addPrivateMessage(line, config.privateMaxMessages());
@@ -542,6 +572,7 @@ public class ChatOverlayPlugin extends Plugin
 			{
 				ChatLine line = new ChatLine("To " + sender, "To " + rawSenderName, rawMsg,
 					ChatCategory.PRIVATE, type);
+				// No icon for outgoing — the local player's own name has no img= tag in rawSenderName
 				if (config.showPrivateChat())
 				{
 					messageManager.addPrivateMessage(line, config.privateMaxMessages());
@@ -563,16 +594,21 @@ public class ChatOverlayPlugin extends Plugin
 			{
 				int gameFilter = client.getVarbitValue(VarbitID.GAME_FILTER);
 				if (gameFilter == 2) break; // Off — hide all
-				if (config.showSystemAlerts())
+				boolean blocked = config.filterSpamAlerts()
+					&& filterMatcher.matches(config.spamPatterns(), lower);
+				if (!blocked)
 				{
-					messageManager.addSystemMessage(
-						new ChatLine(null, null, rawMsg,
-							ChatCategory.SYSTEM, type),
-						config.systemMaxAlerts(),
-						config.filterSpamAlerts(),
-						parseSpamPatterns(),
-						config.spamCooldownSeconds() * 1000L
-					);
+					ChatLine line = new ChatLine(null, null, rawMsg, ChatCategory.SYSTEM, type);
+					if (config.showSystemAlerts())
+					{
+						messageManager.addSystemMessage(line,
+							config.systemMaxAlerts(), config.filterSpamAlerts(),
+							config.spamCooldownSeconds() * 1000L);
+					}
+					if (config.showGameMessagesInMain())
+					{
+						messageManager.addPublicClanMessage(line, config.publicMaxMessages());
+					}
 				}
 				break;
 			}
@@ -580,63 +616,75 @@ public class ChatOverlayPlugin extends Plugin
 			{
 				int gameFilter = client.getVarbitValue(VarbitID.GAME_FILTER);
 				if (gameFilter != 0) break; // Filter or Off — hide SPAM
+				boolean blocked = config.filterSpamAlerts()
+					&& filterMatcher.matches(config.spamPatterns(), lower);
+				if (!blocked)
+				{
+					ChatLine line = new ChatLine(null, null, rawMsg, ChatCategory.SYSTEM, type);
+					if (config.showSystemAlerts())
+					{
+						messageManager.addSystemMessage(line,
+							config.systemMaxAlerts(), config.filterSpamAlerts(),
+							config.spamCooldownSeconds() * 1000L);
+					}
+					if (config.showGameMessagesInMain())
+					{
+						messageManager.addPublicClanMessage(line, config.publicMaxMessages());
+					}
+				}
+				break;
+			}
+
+			case BROADCAST:
+			{
+				ChatLine line = new ChatLine(null, null, rawMsg, ChatCategory.SYSTEM, type);
 				if (config.showSystemAlerts())
 				{
+					messageManager.addSystemMessage(line, config.systemMaxAlerts(), false, 0L);
+				}
+				if (config.showGameMessagesInMain())
+				{
+					boolean blocked = config.filterSpamAlerts()
+						&& filterMatcher.matches(config.spamPatterns(), lower);
+					if (!blocked)
+					{
+						messageManager.addPublicClanMessage(line, config.publicMaxMessages());
+					}
+				}
+				break;
+			}
+
+			case FRIENDSCHATNOTIFICATION:
+			case FRIENDNOTIFICATION:
+			case LOGINLOGOUTNOTIFICATION:
+			{
+				boolean blocked = config.filterSpamAlerts()
+					&& filterMatcher.matches(config.spamPatterns(), lower);
+				if (!blocked && config.showSystemAlerts())
+				{
 					messageManager.addSystemMessage(
-						new ChatLine(null, null, rawMsg,
-							ChatCategory.SYSTEM, type),
+						new ChatLine(null, null, rawMsg, ChatCategory.SYSTEM, type),
 						config.systemMaxAlerts(),
 						config.filterSpamAlerts(),
-						parseSpamPatterns(),
 						config.spamCooldownSeconds() * 1000L
 					);
 				}
 				break;
 			}
 
-			case BROADCAST:
-				if (config.showSystemAlerts())
-				{
-					messageManager.addSystemMessage(
-						new ChatLine(null, null, rawMsg,
-							ChatCategory.SYSTEM, type),
-						config.systemMaxAlerts(),
-						false,
-						Collections.emptySet(),
-						0L
-					);
-				}
-				break;
-
-			case FRIENDSCHATNOTIFICATION:
-			case FRIENDNOTIFICATION:
-			case LOGINLOGOUTNOTIFICATION:
-				if (config.showSystemAlerts())
-				{
-					messageManager.addSystemMessage(
-						new ChatLine(null, null, rawMsg,
-							ChatCategory.SYSTEM, type),
-						config.systemMaxAlerts(),
-						config.filterSpamAlerts(),
-						parseSpamPatterns(),
-						config.spamCooldownSeconds() * 1000L
-					);
-				}
-				break;
-
 			case WELCOME:
+			{
+				ChatLine line = new ChatLine(null, null, rawMsg, ChatCategory.SYSTEM, type);
 				if (config.showSystemAlerts())
 				{
-					messageManager.addSystemMessage(
-						new ChatLine(null, null, rawMsg,
-							ChatCategory.SYSTEM, type),
-						config.systemMaxAlerts(),
-						false,
-						Collections.emptySet(),
-						0L
-					);
+					messageManager.addSystemMessage(line, config.systemMaxAlerts(), false, 0L);
+				}
+				if (config.showGameMessagesInMain())
+				{
+					messageManager.addPublicClanMessage(line, config.publicMaxMessages());
 				}
 				break;
+			}
 
 			default:
 				break;
@@ -687,25 +735,84 @@ public class ChatOverlayPlugin extends Plugin
 	// ── Utilities ──────────────────────────────────────────────────────────
 
 	/**
-	 * Parses the comma-separated spam patterns config string into a lowercase set.
+	 * Extracts the first {@code <img=N>} image ID from the raw sender name, or -1 if absent.
+	 * OSRS embeds these tags to indicate ironman/JMOD status.
 	 */
-	private Set<String> parseSpamPatterns()
+	private int extractIconId(String rawSender)
 	{
-		String csv = config.spamPatterns();
-		if (csv == null || csv.trim().isEmpty())
+		if (rawSender == null)
 		{
-			return Collections.emptySet();
+			return -1;
 		}
-		Set<String> patterns = new HashSet<>();
-		for (String p : csv.split(","))
+		Matcher m = IMG_TAG.matcher(rawSender);
+		if (m.find())
 		{
-			String trimmed = p.trim().toLowerCase();
-			if (!trimmed.isEmpty())
+			try
 			{
-				patterns.add(trimmed);
+				return Integer.parseInt(m.group(1));
+			}
+			catch (NumberFormatException e)
+			{
+				return -1;
 			}
 		}
-		return patterns;
+		return -1;
+	}
+
+	/**
+	 * Resolves the {@code <img=N>} icon from the game's mod-icon array and sets it on {@code line}.
+	 * Must be called on the client thread (i.e. inside an event handler).
+	 */
+	private void resolveAndSetIcon(ChatLine line, int iconId)
+	{
+		if (iconId < 0 || !config.showPlayerIcons())
+		{
+			return;
+		}
+		IndexedSprite[] modIcons = client.getModIcons();
+		if (modIcons == null || iconId >= modIcons.length)
+		{
+			return;
+		}
+		IndexedSprite sprite = modIcons[iconId];
+		if (sprite == null)
+		{
+			return;
+		}
+		line.setIcon(indexedSpriteToImage(sprite));
+	}
+
+	/**
+	 * Converts a RuneLite {@link IndexedSprite} to a {@link java.awt.image.BufferedImage}.
+	 * Palette index 0 is treated as transparent.
+	 */
+	private static java.awt.image.BufferedImage indexedSpriteToImage(IndexedSprite sprite)
+	{
+		int w = sprite.getWidth();
+		int h = sprite.getHeight();
+		int origW = sprite.getOriginalWidth();
+		int origH = sprite.getOriginalHeight();
+		int ox = sprite.getOffsetX();
+		int oy = sprite.getOffsetY();
+		int[] palette = sprite.getPalette();
+		byte[] pixels = sprite.getPixels();
+
+		java.awt.image.BufferedImage img = new java.awt.image.BufferedImage(
+			origW, origH, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+
+		for (int y = 0; y < h; y++)
+		{
+			for (int x = 0; x < w; x++)
+			{
+				int idx = pixels[y * w + x] & 0xFF;
+				if (idx == 0)
+				{
+					continue; // transparent
+				}
+				img.setRGB(x + ox, y + oy, 0xFF000000 | palette[idx]);
+			}
+		}
+		return img;
 	}
 
 	private String sanitizeName(String name)
