@@ -139,8 +139,9 @@ public class GameOverlay extends Overlay
 				continue;
 			}
 
-			List<ColorSegment> faded = buildAlertSegments(alert, fm, alpha);
-			String plain      = buildAlertPlain(alert);
+			AlertContent ac   = buildAlert(alert, alpha);
+			String plain      = ac.plain;
+			List<ColorSegment> faded = ac.faded;
 			int    innerWidth = MAX_BUBBLE_WIDTH - paddingX * 2;
 
 			int bubbleWidth;
@@ -225,8 +226,9 @@ public class GameOverlay extends Overlay
 				continue;
 			}
 
-			List<ColorSegment> faded = buildAlertSegments(alert, fm, alpha);
-			String plain      = buildAlertPlain(alert);
+			AlertContent ac   = buildAlert(alert, alpha);
+			String plain      = ac.plain;
+			List<ColorSegment> faded = ac.faded;
 			int    innerWidth = MAX_BUBBLE_WIDTH - paddingX * 2;
 
 			int bubbleWidth;
@@ -287,23 +289,27 @@ public class GameOverlay extends Overlay
 
 	// ── Helpers ──────────────────────────────────────────────────────────────
 
-	/** Builds the plain text for an alert (timestamp + message). */
-	private String buildAlertPlain(ChatLine alert)
+	static class AlertContent
 	{
-		if (!config.systemShowTimestamp())
+		final String            plain;
+		final List<ColorSegment> faded;
+
+		AlertContent(String plain, List<ColorSegment> faded)
 		{
-			return alert.getRawMessage();
+			this.plain = plain;
+			this.faded = faded;
 		}
-		LocalTime time = LocalTime.ofInstant(
-			Instant.ofEpochMilli(alert.getTimestamp()), ZoneId.systemDefault());
-		return String.format("[%02d:%02d] ", time.getHour(), time.getMinute()) + alert.getRawMessage();
 	}
 
-	/** Builds alpha-faded segments for an alert. */
-	private List<ColorSegment> buildAlertSegments(ChatLine alert, FontMetrics fm, float alpha)
+	/**
+	 * Builds both the plain (tag-stripped) text and the alpha-faded segments for
+	 * an alert from the same {@link ChatLineBuilder} pass, ensuring bubble sizing
+	 * and rendering are always in sync.
+	 */
+	private AlertContent buildAlert(ChatLine alert, float alpha)
 	{
-		Color msgColor = colorResolver.getChatColor(alert.getChatMessageType(), ChatColorType.HIGHLIGHT);
-		ChatLineBuilder builder = new ChatLineBuilder(msgColor, colorResolver.getChatColorConfig());
+		Color           msgColor = colorResolver.getChatColor(alert.getChatMessageType(), ChatColorType.HIGHLIGHT);
+		ChatLineBuilder builder  = new ChatLineBuilder(msgColor, colorResolver.getChatColorConfig());
 		if (config.systemShowTimestamp())
 		{
 			LocalTime time = LocalTime.ofInstant(
@@ -311,6 +317,8 @@ public class GameOverlay extends Overlay
 			builder.append(String.format("[%02d:%02d] ", time.getHour(), time.getMinute()), msgColor);
 		}
 		builder.append(alert.getRawMessage());
-		return renderer.applyAlphaToSegments(builder.getSegments(), alpha);
+		return new AlertContent(
+			builder.toPlainString(),
+			renderer.applyAlphaToSegments(builder.getSegments(), alpha));
 	}
 }
