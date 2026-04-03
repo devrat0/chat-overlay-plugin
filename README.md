@@ -2,6 +2,10 @@
 
 Splits the OSRS chatbox into three independent overlays, each draggable and independently configurable.
 
+![Alt text](./images/example_image.png "optional title")
+![active chat bubble and peek mode](https://github.com/user-attachments/assets/88545b7e-88af-419d-8b74-91248f8af5d6)
+![game messages example](https://github.com/user-attachments/assets/7f87dc68-15d8-4018-b2d4-730a734e8368)
+![chat overlay example gif](https://github.com/user-attachments/assets/fb22d90d-311a-4015-9b6d-16949d7bd168)
 
 ## Features
 
@@ -134,7 +138,4 @@ Open **Plugin Panel → Chat Overlay** (wrench icon, search "Chat Overlay").
 - If a pattern contains `*` anywhere, it is treated as a **wildcard** — `*` matches any sequence of characters (e.g. `you*reach` matches "you can't reach that", `*reach*` matches anything containing "reach")
 - Otherwise the pattern is a plain **substring** match (case-insensitive)
 
----
-
-## Example Image
-![Alt text](./images/example_image.png "optional title")
+--- 
