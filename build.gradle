@@ -63,3 +63,8 @@ tasks.register('shadowJar', Jar) {
     archiveClassifier.set('shadow')
     archiveFileName.set("${rootProject.name}-${project.version}-all.jar")
 }
+run {
+    jvmArgs = [
+            '--add-opens=java.desktop/com.apple.eawt=ALL-UNNAMED'
+    ]
+}
