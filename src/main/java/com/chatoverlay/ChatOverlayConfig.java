@@ -39,9 +39,16 @@ public interface ChatOverlayConfig extends Config
 	String privateSection = "private";
 
 	@ConfigSection(
+		name = "Clan Chat",
+		description = "Settings for the dedicated clan chat overlay",
+		position = 3
+	)
+	String clanSection = "clan";
+
+	@ConfigSection(
 		name = "Game Chat",
 		description = "Settings for game/system message alerts",
-		position = 3
+		position = 4
 	)
 	String systemSection = "system";
 
@@ -365,6 +372,31 @@ public interface ChatOverlayConfig extends Config
 		return true;
 	}
 
+	@ConfigItem(
+		keyName = "publicLayoutMode",
+		name = "Layout Mode",
+		description = "Stack messages from top to bottom or bottom to top",
+		position = 16,
+		section = "publicClan"
+	)
+	default LayoutMode publicLayoutMode()
+	{
+		return LayoutMode.BOTTOM_TO_TOP;
+	}
+
+	@ConfigItem(
+		keyName = "publicOverlayHeight",
+		name = "Overlay Height",
+		description = "Height of the public/clan chat overlay in pixels (used in Bottom to Top mode)",
+		position = 17,
+		section = "publicClan"
+	)
+	@Range(min = 100, max = 800)
+	default int publicOverlayHeight()
+	{
+		return 300;
+	}
+
 	// ──────────────────────────────────────────────
 	//  PRIVATE CHAT  (above public/clan)
 	// ──────────────────────────────────────────────
@@ -520,6 +552,221 @@ public interface ChatOverlayConfig extends Config
 		return true;
 	}
 
+	@ConfigItem(
+		keyName = "privateLayoutMode",
+		name = "Layout Mode",
+		description = "Stack messages from top to bottom or bottom to top",
+		position = 12,
+		section = "private"
+	)
+	default LayoutMode privateLayoutMode()
+	{
+		return LayoutMode.BOTTOM_TO_TOP;
+	}
+
+	@ConfigItem(
+		keyName = "privateOverlayHeight",
+		name = "Overlay Height",
+		description = "Height of the private chat overlay in pixels (used in Bottom to Top mode)",
+		position = 13,
+		section = "private"
+	)
+	@Range(min = 100, max = 800)
+	default int privateOverlayHeight()
+	{
+		return 200;
+	}
+
+	// ──────────────────────────────────────────────
+	//  CLAN CHAT OVERLAY
+	// ──────────────────────────────────────────────
+
+	@ConfigItem(
+		keyName = "showClanChatOverlay",
+		name = "Show Clan Chat Overlay",
+		description = "Display a dedicated overlay for clan and friends chat messages",
+		position = 0,
+		section = "clan"
+	)
+	default boolean showClanChatOverlay()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "clanShowClan",
+		name = "Show Clan Chat Messages",
+		description = "Display regular clan chat messages in this overlay",
+		position = 1,
+		section = "clan"
+	)
+	default boolean clanShowClan()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "clanShowGuest",
+		name = "Show Guest Clan Messages",
+		description = "Display guest clan chat messages in this overlay",
+		position = 2,
+		section = "clan"
+	)
+	default boolean clanShowGuest()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "clanShowGim",
+		name = "Show GIM Clan Messages",
+		description = "Display Group Ironman clan chat messages in this overlay",
+		position = 3,
+		section = "clan"
+	)
+	default boolean clanShowGim()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "clanShowFriendsChat",
+		name = "Show Friends Chat Messages",
+		description = "Display friends chat messages in this overlay",
+		position = 4,
+		section = "clan"
+	)
+	default boolean clanShowFriendsChat()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "clanOverlayWidth",
+		name = "Overlay Width",
+		description = "Width of the dedicated clan chat overlay in pixels",
+		position = 5,
+		section = "clan"
+	)
+	@Range(min = 200, max = 800)
+	default int clanOverlayWidth()
+	{
+		return 400;
+	}
+
+	@ConfigItem(
+		keyName = "clanOverlayHeight",
+		name = "Overlay Height",
+		description = "Height of the dedicated clan chat overlay in pixels (used in Bottom to Top mode)",
+		position = 6,
+		section = "clan"
+	)
+	@Range(min = 100, max = 800)
+	default int clanOverlayHeight()
+	{
+		return 300;
+	}
+
+	@ConfigItem(
+		keyName = "clanBgColor",
+		name = "Background Color",
+		description = "Background color for the dedicated clan chat overlay",
+		position = 7,
+		section = "clan"
+	)
+	@Alpha
+	default Color clanBgColor()
+	{
+		return new Color(30, 30, 30, 200);
+	}
+
+	@ConfigItem(
+		keyName = "clanBgEnabled",
+		name = "Show Background",
+		description = "Toggle background on/off",
+		position = 8,
+		section = "clan"
+	)
+	default boolean clanBgEnabled()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "clanShowBubbleBorder",
+		name = "Show Bubble Border",
+		description = "Draw a 1px rounded border around each chat bubble",
+		position = 9,
+		section = "clan"
+	)
+	default boolean clanShowBubbleBorder()
+	{
+		return false;
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "clanBubbleBorderColor",
+		name = "Bubble Border Color",
+		description = "Color of the bubble border in the clan chat overlay",
+		position = 10,
+		section = "clan"
+	)
+	default Color clanBubbleBorderColor()
+	{
+		return new Color(52, 52, 52, 180);
+	}
+
+	@ConfigItem(
+		keyName = "clanMessageDuration",
+		name = "Message Duration (seconds)",
+		description = "How long each message stays fully visible. Set to 0 to keep indefinitely.",
+		position = 11,
+		section = "clan"
+	)
+	@Range(min = 0, max = 300)
+	default int clanMessageDuration()
+	{
+		return 60;
+	}
+
+	@ConfigItem(
+		keyName = "clanMaxMessages",
+		name = "Max Messages",
+		description = "Maximum number of messages shown in the clan chat overlay",
+		position = 12,
+		section = "clan"
+	)
+	@Range(min = 1, max = 50)
+	default int clanMaxMessages()
+	{
+		return 10;
+	}
+
+	@ConfigItem(
+		keyName = "clanLayoutMode",
+		name = "Layout Mode",
+		description = "Stack messages from top to bottom or bottom to top",
+		position = 13,
+		section = "clan"
+	)
+	default LayoutMode clanLayoutMode()
+	{
+		return LayoutMode.BOTTOM_TO_TOP;
+	}
+
+	@ConfigItem(
+		keyName = "clanShowTimestamp",
+		name = "Show Timestamp [HH:MM]",
+		description = "Prefix each message with its timestamp",
+		position = 14,
+		section = "clan"
+	)
+	default boolean clanShowTimestamp()
+	{
+		return true;
+	}
+
 	// ──────────────────────────────────────────────
 	//  SYSTEM ALERTS  (near player or free overlay)
 	// ──────────────────────────────────────────────
@@ -664,12 +911,60 @@ public interface ChatOverlayConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "filterInteractionSpam",
+		name = "Filter Interaction Failures",
+		description = "Filter out repetitive interaction block messages (e.g. 'I can't reach that', 'Nothing interesting happens')",
+		position = 11,
+		section = "system"
+	)
+	default boolean filterInteractionSpam()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "filterSkillingSpam",
+		name = "Filter Skilling Spam",
+		description = "Filter out repetitive skilling status messages (e.g. 'You swing your axe', 'You get some logs', 'You manage to mine')",
+		position = 12,
+		section = "system"
+	)
+	default boolean filterSkillingSpam()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "filterCombatLootSpam",
+		name = "Filter Combat/Loot Spam",
+		description = "Filter out minor combat or loot messages (e.g. Ring of Wealth coins, retrieving ammo)",
+		position = 13,
+		section = "system"
+	)
+	default boolean filterCombatLootSpam()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "filterConsumablesSpam",
+		name = "Filter Consumables",
+		description = "Filter out messages about eating food or drinking potions (e.g. 'You eat the shark', 'It heals some health')",
+		position = 14,
+		section = "system"
+	)
+	default boolean filterConsumablesSpam()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "spamPatterns",
 		name = "Spam Patterns",
 		description = "Comma-separated list of patterns to filter when 'Filter Spam' is on. "
 			+ "Case-insensitive. If a pattern contains * it is treated as a wildcard (e.g. you*reach matches anything starting with 'you' and containing 'reach'). "
 			+ "Otherwise the pattern is a plain substring match.",
-		position = 11,
+		position = 15,
 		section = "system"
 	)
 	default String spamPatterns()
@@ -687,7 +982,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "spamCooldownSeconds",
 		name = "Spam Cooldown (seconds)",
 		description = "Minimum seconds between identical system messages. Set to 0 to allow all duplicates.",
-		position = 12,
+		position = 16,
 		section = "system"
 	)
 	@Range(min = 0, max = 30)
@@ -700,7 +995,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "showLevelUpAlerts",
 		name = "Show Level-Up Alerts",
 		description = "Show level-up messages in game chat overlay",
-		position = 13,
+		position = 17,
 		section = "system"
 	)
 	default boolean showLevelUpAlerts()
@@ -712,7 +1007,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "showDropAlerts",
 		name = "Show Loot/Drop Alerts",
 		description = "Show valuable drop messages in game chat overlay",
-		position = 14,
+		position = 18,
 		section = "system"
 	)
 	default boolean showDropAlerts()
@@ -724,7 +1019,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "systemShowTimestamp",
 		name = "Show Timestamp [HH:MM]",
 		description = "Prefix each alert with its timestamp",
-		position = 15,
+		position = 19,
 		section = "system"
 	)
 	default boolean systemShowTimestamp()
@@ -737,7 +1032,7 @@ public interface ChatOverlayConfig extends Config
 		name = "Vertical Offset (Pinned)",
 		description = "Vertical offset in 3D units above/below the player's head when Pinned to Player. "
 			+ "Positive values move it higher, negative values move it lower.",
-		position = 16,
+		position = 20,
 		section = "system"
 	)
 	@Range(min = -300, max = 300)

@@ -40,6 +40,7 @@ public class ChatOverlayPlugin extends Plugin
 	@Inject private PublicClanChatOverlay publicClanOverlay;
 	@Inject private PrivateChatOverlay    privateChatOverlay;
 	@Inject private GameOverlay           systemAlertOverlay;
+	@Inject private ClanChatOverlay       clanChatOverlay;
 	@Inject private ChatColorResolver     colorResolver;
 	@Inject private PlayerIconLoader      iconLoader;
 	@Inject private ChannelNameResolver   channelNames;
@@ -127,6 +128,7 @@ public class ChatOverlayPlugin extends Plugin
 		overlayManager.add(publicClanOverlay);
 		overlayManager.add(privateChatOverlay);
 		overlayManager.add(systemAlertOverlay);
+		overlayManager.add(clanChatOverlay);
 		log.info("Chat Overlay plugin started");
 	}
 
@@ -139,6 +141,7 @@ public class ChatOverlayPlugin extends Plugin
 		overlayManager.remove(publicClanOverlay);
 		overlayManager.remove(privateChatOverlay);
 		overlayManager.remove(systemAlertOverlay);
+		overlayManager.remove(clanChatOverlay);
 		messageManager.clearAll();
 		log.info("Chat Overlay plugin stopped");
 	}
@@ -166,8 +169,8 @@ public class ChatOverlayPlugin extends Plugin
 		else if (widgetId == InterfaceID.Chatbox.CHAT_GAME)       { messageManager.clearSystemMessages(); }
 		else if (widgetId == InterfaceID.Chatbox.CHAT_PUBLIC)     { messageManager.clearPublicClanMessages(); }
 		else if (widgetId == InterfaceID.Chatbox.CHAT_PRIVATE)    { messageManager.clearPrivateMessages(); }
-		else if (widgetId == InterfaceID.Chatbox.CHAT_FRIENDSCHAT){ messageManager.clearPublicClanMessages(); }
-		else if (widgetId == InterfaceID.Chatbox.CHAT_CLAN)       { messageManager.clearPublicClanMessages(); }
+		else if (widgetId == InterfaceID.Chatbox.CHAT_FRIENDSCHAT){ messageManager.clearPublicClanMessages(); messageManager.clearClanMessages(); }
+		else if (widgetId == InterfaceID.Chatbox.CHAT_CLAN)       { messageManager.clearPublicClanMessages(); messageManager.clearClanMessages(); }
 	}
 
 	@Subscribe
@@ -234,7 +237,7 @@ public class ChatOverlayPlugin extends Plugin
 
 	private void handleClanChat(ChatMessageType type, String sender, String rawSenderName, String rawMsg)
 	{
-		if (!config.showClanChat())
+		if (!config.showClanChat() && !config.showClanChatOverlay())
 		{
 			return;
 		}
@@ -251,19 +254,49 @@ public class ChatOverlayPlugin extends Plugin
 		}
 		ChatLine line = new ChatLine(sender, rawSenderName, rawMsg, ChatCategory.CLAN, type, channelName);
 		iconLoader.resolveAndSetIcon(line, iconLoader.extractIconId(rawSenderName));
-		messageManager.addPublicClanMessage(line, config.publicMaxMessages());
+		if (config.showClanChat())
+		{
+			messageManager.addPublicClanMessage(line, config.publicMaxMessages());
+		}
+		if (config.showClanChatOverlay())
+		{
+			boolean shouldAdd = false;
+			if (type == ChatMessageType.CLAN_GIM_CHAT)
+			{
+				shouldAdd = config.clanShowGim();
+			}
+			else if (type == ChatMessageType.CLAN_GUEST_CHAT || type == ChatMessageType.CLAN_GUEST_MESSAGE)
+			{
+				shouldAdd = config.clanShowGuest();
+			}
+			else
+			{
+				shouldAdd = config.clanShowClan();
+			}
+			if (shouldAdd)
+			{
+				messageManager.addClanMessage(line, config.clanMaxMessages());
+			}
+		}
 	}
 
 	private void handleFriendsChat(String sender, String rawSenderName, String rawMsg)
 	{
-		if (!config.showFriendsChat())
+		if (!config.showFriendsChat() && !config.showClanChatOverlay())
 		{
 			return;
 		}
 		ChatLine line = new ChatLine(sender, rawSenderName, rawMsg,
 			ChatCategory.FRIENDS_CHAT, ChatMessageType.FRIENDSCHAT, channelNames.getFriendsChatName());
 		iconLoader.resolveAndSetIcon(line, iconLoader.extractIconId(rawSenderName));
-		messageManager.addPublicClanMessage(line, config.publicMaxMessages());
+		if (config.showFriendsChat())
+		{
+			messageManager.addPublicClanMessage(line, config.publicMaxMessages());
+		}
+		if (config.showClanChatOverlay() && config.clanShowFriendsChat())
+		{
+			messageManager.addClanMessage(line, config.clanMaxMessages());
+		}
 	}
 
 	private void handlePrivateChat(ChatMessageType type, String sender, String rawSenderName, String rawMsg)
@@ -285,6 +318,19 @@ public class ChatOverlayPlugin extends Plugin
 		}
 	}
 
+	private boolean isSystemMessageFiltered(String lower)
+	{
+		if (!config.filterSpamAlerts())
+		{
+			return false;
+		}
+		return filterMatcher.matches(config.spamPatterns(), lower)
+			|| (config.filterInteractionSpam() && filterMatcher.matchesInteraction(lower))
+			|| (config.filterSkillingSpam() && filterMatcher.matchesSkilling(lower))
+			|| (config.filterCombatLootSpam() && filterMatcher.matchesCombatLoot(lower))
+			|| (config.filterConsumablesSpam() && filterMatcher.matchesConsumables(lower));
+	}
+
 	private void handleSystemMessage(ChatMessageType type, String rawMsg, String lower)
 	{
 		int gameFilter = client.getVarbitValue(VarbitID.GAME_FILTER);
@@ -295,7 +341,7 @@ public class ChatOverlayPlugin extends Plugin
 			case ENGINE:
 			{
 				if (gameFilter == 2) return; // Off
-				boolean blocked = config.filterSpamAlerts() && filterMatcher.matches(config.spamPatterns(), lower);
+				boolean blocked = isSystemMessageFiltered(lower);
 				if (blocked) return;
 				addSystemLine(rawMsg, type, true);
 				break;
@@ -303,7 +349,7 @@ public class ChatOverlayPlugin extends Plugin
 			case SPAM:
 			{
 				if (gameFilter != 0) return; // Filter or Off
-				boolean blocked = config.filterSpamAlerts() && filterMatcher.matches(config.spamPatterns(), lower);
+				boolean blocked = isSystemMessageFiltered(lower);
 				if (blocked) return;
 				addSystemLine(rawMsg, type, true);
 				break;
@@ -317,7 +363,7 @@ public class ChatOverlayPlugin extends Plugin
 				}
 				if (config.showGameMessagesInMain())
 				{
-					boolean blocked = config.filterSpamAlerts() && filterMatcher.matches(config.spamPatterns(), lower);
+					boolean blocked = isSystemMessageFiltered(lower);
 					if (!blocked)
 					{
 						messageManager.addPublicClanMessage(line, config.publicMaxMessages());
@@ -329,7 +375,7 @@ public class ChatOverlayPlugin extends Plugin
 			case FRIENDNOTIFICATION:
 			case LOGINLOGOUTNOTIFICATION:
 			{
-				boolean blocked = config.filterSpamAlerts() && filterMatcher.matches(config.spamPatterns(), lower);
+				boolean blocked = isSystemMessageFiltered(lower);
 				if (!blocked && config.showSystemAlerts())
 				{
 					messageManager.addSystemMessage(

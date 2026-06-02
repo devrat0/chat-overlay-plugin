@@ -117,10 +117,34 @@ public class ChatLine
 	{
 		return icon;
 	}
- 
+
 	void setIcon(BufferedImage icon)
 	{
 		this.icon = icon;
 	}
 
+	private volatile long pruneTimestamp = 0;
+
+	public void prune()
+	{
+		if (pruneTimestamp == 0)
+		{
+			pruneTimestamp = System.currentTimeMillis();
+		}
+	}
+
+	public boolean isPruned()
+	{
+		return pruneTimestamp > 0;
+	}
+
+	public long getPruneTimestamp()
+	{
+		return pruneTimestamp;
+	}
+
+	public long getPruneAge()
+	{
+		return pruneTimestamp == 0 ? 0 : System.currentTimeMillis() - pruneTimestamp;
+	}
 }

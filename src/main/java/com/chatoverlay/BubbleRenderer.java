@@ -51,40 +51,67 @@ public class BubbleRenderer
 	 * Standard fade-out only: opaque until 3 s before {@code durMs}, then fades to 0.
 	 * Returns 1.0 when {@code durMs} is 0 (infinite).
 	 */
-	public float computeAlpha(long ageMs, long durMs)
+	public float computeAlpha(ChatLine line, long durMs)
 	{
+		float baseAlpha;
+		long ageMs = line.getAge();
 		if (durMs <= 0)
 		{
-			return 1.0f;
+			baseAlpha = 1.0f;
 		}
-		long fadeWindowMs = Math.min(3000L, durMs);
-		long fadeStartMs  = durMs - fadeWindowMs;
-		if (ageMs < fadeStartMs)
+		else
 		{
-			return 1.0f;
+			long fadeWindowMs = Math.min(3000L, durMs);
+			long fadeStartMs  = durMs - fadeWindowMs;
+			if (ageMs < fadeStartMs)
+			{
+				baseAlpha = 1.0f;
+			}
+			else
+			{
+				baseAlpha = Math.max(0f, 1.0f - (float) (ageMs - fadeStartMs) / fadeWindowMs);
+			}
 		}
-		return Math.max(0f, 1.0f - (float) (ageMs - fadeStartMs) / fadeWindowMs);
+
+		if (line.isPruned())
+		{
+			float pruneAlpha = Math.max(0f, 1.0f - (float) line.getPruneAge() / 1000f);
+			return Math.min(baseAlpha, pruneAlpha);
+		}
+		return baseAlpha;
 	}
 
 	/**
 	 * Fade-in over first 10% of lifetime, fully opaque until 3 s before expiry, then fades out.
 	 * Used by GameOverlay.
 	 */
-	public float computeAlphaWithFadeIn(long ageMs, long durationMs)
+	public float computeAlphaWithFadeIn(ChatLine line, long durationMs)
 	{
+		long ageMs = line.getAge();
 		long fadeWindowMs = Math.min(3000L, durationMs);
 		long fadeStartMs  = durationMs - fadeWindowMs;
 		long fadeInEndMs  = Math.min((long) (durationMs * 0.1f), fadeStartMs);
 
+		float baseAlpha;
 		if (fadeInEndMs > 0 && ageMs < fadeInEndMs)
 		{
-			return (float) ageMs / fadeInEndMs;
+			baseAlpha = (float) ageMs / fadeInEndMs;
 		}
-		if (ageMs < fadeStartMs)
+		else if (ageMs < fadeStartMs)
 		{
-			return 1.0f;
+			baseAlpha = 1.0f;
 		}
-		return Math.max(0f, 1.0f - (float) (ageMs - fadeStartMs) / fadeWindowMs);
+		else
+		{
+			baseAlpha = Math.max(0f, 1.0f - (float) (ageMs - fadeStartMs) / fadeWindowMs);
+		}
+
+		if (line.isPruned())
+		{
+			float pruneAlpha = Math.max(0f, 1.0f - (float) line.getPruneAge() / 1000f);
+			return Math.min(baseAlpha, pruneAlpha);
+		}
+		return baseAlpha;
 	}
 
 	public List<ColorSegment> applyAlphaToSegments(List<ColorSegment> segments, float alpha)

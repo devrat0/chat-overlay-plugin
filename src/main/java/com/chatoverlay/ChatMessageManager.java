@@ -15,6 +15,7 @@ public class ChatMessageManager
 	private final LinkedList<ChatLine> publicClanMessages = new LinkedList<>();
 	private final LinkedList<ChatLine> privateMessages = new LinkedList<>();
 	private final LinkedList<ChatLine> systemMessages = new LinkedList<>();
+	private final LinkedList<ChatLine> clanMessages = new LinkedList<>();
 
 	/**
 	 * Spam filter: tracks recently seen system messages to suppress duplicates.
@@ -29,16 +30,52 @@ public class ChatMessageManager
 		}
 	};
 
+	private void pruneQueue(LinkedList<ChatLine> queue, int maxLimit)
+	{
+		long now = System.currentTimeMillis();
+		// Remove messages that are pruned and fully faded out (1 second fade-out time)
+		queue.removeIf(m -> m.isPruned() && (now - m.getPruneTimestamp()) > 1000L);
+
+		int activeCount = 0;
+		for (ChatLine m : queue)
+		{
+			if (!m.isPruned())
+			{
+				activeCount++;
+			}
+		}
+
+		if (activeCount > maxLimit)
+		{
+			int toPrune = activeCount - maxLimit;
+			for (ChatLine m : queue)
+			{
+				if (!m.isPruned())
+				{
+					m.prune();
+					toPrune--;
+					if (toPrune == 0)
+					{
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	private List<ChatLine> getActiveAndFading(LinkedList<ChatLine> queue)
+	{
+		long now = System.currentTimeMillis();
+		queue.removeIf(m -> m.isPruned() && (now - m.getPruneTimestamp()) > 1000L);
+		return new ArrayList<>(queue);
+	}
 
 	public void addPublicClanMessage(ChatLine line, int maxMessages)
 	{
 		synchronized (publicClanMessages)
 		{
 			publicClanMessages.addLast(line);
-			while (publicClanMessages.size() > maxMessages)
-			{
-				publicClanMessages.removeFirst();
-			}
+			pruneQueue(publicClanMessages, maxMessages);
 		}
 	}
 
@@ -47,10 +84,16 @@ public class ChatMessageManager
 		synchronized (privateMessages)
 		{
 			privateMessages.addLast(line);
-			while (privateMessages.size() > maxMessages)
-			{
-				privateMessages.removeFirst();
-			}
+			pruneQueue(privateMessages, maxMessages);
+		}
+	}
+
+	public void addClanMessage(ChatLine line, int maxMessages)
+	{
+		synchronized (clanMessages)
+		{
+			clanMessages.addLast(line);
+			pruneQueue(clanMessages, maxMessages);
 		}
 	}
 
@@ -71,10 +114,7 @@ public class ChatMessageManager
 		synchronized (systemMessages)
 		{
 			systemMessages.addLast(line);
-			while (systemMessages.size() > maxAlerts)
-			{
-				systemMessages.removeFirst();
-			}
+			pruneQueue(systemMessages, maxAlerts);
 		}
 		return true;
 	}
@@ -83,7 +123,7 @@ public class ChatMessageManager
 	{
 		synchronized (publicClanMessages)
 		{
-			return new ArrayList<>(publicClanMessages);
+			return getActiveAndFading(publicClanMessages);
 		}
 	}
 
@@ -91,7 +131,7 @@ public class ChatMessageManager
 	{
 		synchronized (privateMessages)
 		{
-			return new ArrayList<>(privateMessages);
+			return getActiveAndFading(privateMessages);
 		}
 	}
 
@@ -99,7 +139,15 @@ public class ChatMessageManager
 	{
 		synchronized (systemMessages)
 		{
-			return new ArrayList<>(systemMessages);
+			return getActiveAndFading(systemMessages);
+		}
+	}
+
+	public List<ChatLine> getClanMessages()
+	{
+		synchronized (clanMessages)
+		{
+			return getActiveAndFading(clanMessages);
 		}
 	}
 
@@ -119,6 +167,14 @@ public class ChatMessageManager
 		}
 	}
 
+	public void clearClanMessages()
+	{
+		synchronized (clanMessages)
+		{
+			clanMessages.clear();
+		}
+	}
+
 	public void clearSystemMessages()
 	{
 		synchronized (systemMessages)
@@ -133,5 +189,6 @@ public class ChatMessageManager
 		clearPublicClanMessages();
 		clearPrivateMessages();
 		clearSystemMessages();
+		clearClanMessages();
 	}
 }

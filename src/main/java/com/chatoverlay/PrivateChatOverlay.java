@@ -79,17 +79,24 @@ public class PrivateChatOverlay extends Overlay
 		FontMetrics fm = graphics.getFontMetrics(font);
 
 		int maxWidth      = config.privateOverlayWidth();
+		int maxHeight     = config.privateOverlayHeight();
+		LayoutMode layoutMode = config.privateLayoutMode();
 		long durMs        = config.privateMessageDuration() * 1000L;
 		int paddingX      = config.bubblePaddingX();
 		int paddingY      = config.bubblePaddingY();
 		int bubbleSpacing = config.bubbleSpacing();
 
-		int y          = 0;
+		int y          = (layoutMode == LayoutMode.BOTTOM_TO_TOP) ? maxHeight : 0;
 		int totalWidth = 0;
 
-		for (ChatLine line : messages)
+		int startIdx = (layoutMode == LayoutMode.BOTTOM_TO_TOP) ? messages.size() - 1 : 0;
+		int endIdx   = (layoutMode == LayoutMode.BOTTOM_TO_TOP) ? -1 : messages.size();
+		int step     = (layoutMode == LayoutMode.BOTTOM_TO_TOP) ? -1 : 1;
+
+		for (int i = startIdx; i != endIdx; i += step)
 		{
-			float alpha = renderer.computeAlpha(line.getAge(), durMs);
+			ChatLine line = messages.get(i);
+			float alpha = renderer.computeAlpha(line, durMs);
 			if (plugin.isPeekActive() || (!config.privateFadeMessages() && alpha > 0f))
 			{
 				alpha = 1.0f;
@@ -152,19 +159,66 @@ public class PrivateChatOverlay extends Overlay
 				bubbleWidth  = maxLineW + timestampWidth + iconOffsetX + paddingX * 2;
 				bubbleHeight = fm.getHeight() * lineRanges.size() + paddingY * 2;
 
-				renderer.drawBubble(graphics, 0, y, bubbleWidth, bubbleHeight, config.privateBgColor(), alpha);
-				renderer.drawBubbleBorder(graphics, 0, y, bubbleWidth, bubbleHeight,
+				int bubbleY;
+				if (layoutMode == LayoutMode.BOTTOM_TO_TOP)
+				{
+					y -= bubbleHeight;
+					bubbleY = y;
+				}
+				else
+				{
+					bubbleY = y;
+				}
+
+				renderer.drawBubble(graphics, 0, bubbleY, bubbleWidth, bubbleHeight, config.privateBgColor(), alpha);
+				renderer.drawBubbleBorder(graphics, 0, bubbleY, bubbleWidth, bubbleHeight,
 					config.privateBubbleBorderColor(), config.privateShowBubbleBorder(), plugin.isPeekActive(), alpha);
 
-				int textY = y + paddingY + fm.getAscent();
-				drawTimestampAndIcon(graphics, fm, timestampStr, timestampWidth, icon, iconOffsetX,
-					paddingX, y, paddingY, textY, senderColor, alpha);
+				int textY = bubbleY + paddingY + fm.getAscent();
+				drawTimestamp(graphics, timestampStr, paddingX, textY, senderColor, alpha);
 
+				int startX = paddingX + timestampWidth;
+				boolean isFirst = true;
 				for (int[] range : lineRanges)
 				{
 					List<ColorSegment> lineSegs = renderer.sliceSegments(faded, range[0], range[1]);
 					int lineW = fm.stringWidth(plain.substring(range[0], range[1]));
-					renderer.renderSegments(graphics, lineSegs, textStartX, textY, fm, textStartX + lineW);
+
+					if (isFirst && icon != null)
+					{
+						String rawSender = line.getRawSender();
+						String prefix = rawSender.startsWith("From ") ? "From " : (rawSender.startsWith("To ") ? "To " : "");
+						int prefixLen = prefix.length();
+						int relativeSplit = prefixLen - range[0];
+
+						if (relativeSplit <= 0)
+						{
+							drawIcon(graphics, fm, icon, startX, bubbleY, paddingY, alpha);
+							renderer.renderSegments(graphics, lineSegs, startX + iconOffsetX, textY, fm, startX + iconOffsetX + lineW);
+						}
+						else if (relativeSplit >= range[1] - range[0])
+						{
+							renderer.renderSegments(graphics, lineSegs, startX, textY, fm, startX + lineW);
+						}
+						else
+						{
+							List<ColorSegment> prefixSegs = renderer.sliceSegments(faded, range[0], prefixLen);
+							List<ColorSegment> senderSegs = renderer.sliceSegments(faded, prefixLen, range[1]);
+
+							int prefixW = fm.stringWidth(prefix);
+							renderer.renderSegments(graphics, prefixSegs, startX, textY, fm, startX + prefixW);
+							drawIcon(graphics, fm, icon, startX + prefixW, bubbleY, paddingY, alpha);
+
+							int contentStartX = startX + prefixW + iconOffsetX;
+							int contentW = fm.stringWidth(plain.substring(prefixLen, range[1]));
+							renderer.renderSegments(graphics, senderSegs, contentStartX, textY, fm, contentStartX + contentW);
+						}
+						isFirst = false;
+					}
+					else
+					{
+						renderer.renderSegments(graphics, lineSegs, startX, textY, fm, startX + lineW);
+					}
 					textY += fm.getHeight();
 				}
 			}
@@ -174,51 +228,114 @@ public class PrivateChatOverlay extends Overlay
 				bubbleWidth  = textWidth + timestampWidth + iconOffsetX + paddingX * 2;
 				bubbleHeight = fm.getHeight() + paddingY * 2;
 
-				renderer.drawBubble(graphics, 0, y, bubbleWidth, bubbleHeight, config.privateBgColor(), alpha);
-				renderer.drawBubbleBorder(graphics, 0, y, bubbleWidth, bubbleHeight,
+				int bubbleY;
+				if (layoutMode == LayoutMode.BOTTOM_TO_TOP)
+				{
+					y -= bubbleHeight;
+					bubbleY = y;
+				}
+				else
+				{
+					bubbleY = y;
+				}
+
+				renderer.drawBubble(graphics, 0, bubbleY, bubbleWidth, bubbleHeight, config.privateBgColor(), alpha);
+				renderer.drawBubbleBorder(graphics, 0, bubbleY, bubbleWidth, bubbleHeight,
 					config.privateBubbleBorderColor(), config.privateShowBubbleBorder(), plugin.isPeekActive(), alpha);
 
-				int textY = y + paddingY + fm.getAscent();
-				drawTimestampAndIcon(graphics, fm, timestampStr, timestampWidth, icon, iconOffsetX,
-					paddingX, y, paddingY, textY, senderColor, alpha);
-				renderer.renderSegments(graphics, faded, textStartX, textY, fm, textStartX + textWidth);
+				int textY = bubbleY + paddingY + fm.getAscent();
+				drawTimestamp(graphics, timestampStr, paddingX, textY, senderColor, alpha);
+
+				int startX = paddingX + timestampWidth;
+				if (icon != null)
+				{
+					String rawSender = line.getRawSender();
+					String prefix = rawSender.startsWith("From ") ? "From " : (rawSender.startsWith("To ") ? "To " : "");
+					if (!prefix.isEmpty())
+					{
+						int prefixLen = prefix.length();
+						int plainLen = plain.length();
+
+						List<ColorSegment> prefixSegs = renderer.sliceSegments(faded, 0, prefixLen);
+						List<ColorSegment> senderSegs = renderer.sliceSegments(faded, prefixLen, plainLen);
+
+						int prefixW = fm.stringWidth(prefix);
+						renderer.renderSegments(graphics, prefixSegs, startX, textY, fm, startX + prefixW);
+						drawIcon(graphics, fm, icon, startX + prefixW, bubbleY, paddingY, alpha);
+
+						int contentStartX = startX + prefixW + iconOffsetX;
+						renderer.renderSegments(graphics, senderSegs, contentStartX, textY, fm, contentStartX + textWidth - prefixW);
+					}
+					else
+					{
+						drawIcon(graphics, fm, icon, startX, bubbleY, paddingY, alpha);
+						renderer.renderSegments(graphics, faded, startX + iconOffsetX, textY, fm, startX + iconOffsetX + textWidth);
+					}
+				}
+				else
+				{
+					renderer.renderSegments(graphics, faded, startX, textY, fm, startX + textWidth);
+				}
 			}
 
 			totalWidth = Math.max(totalWidth, bubbleWidth);
-			y += bubbleHeight + bubbleSpacing;
+
+			if (layoutMode == LayoutMode.BOTTOM_TO_TOP)
+			{
+				y -= bubbleSpacing;
+				if (y < 0)
+				{
+					break;
+				}
+			}
+			else
+			{
+				y += bubbleHeight + bubbleSpacing;
+			}
 		}
 
-		if (y == 0)
+		if (layoutMode == LayoutMode.BOTTOM_TO_TOP)
 		{
-			return null;
+			if (y == maxHeight)
+			{
+				return null;
+			}
+			return new Dimension(Math.max(totalWidth, maxWidth), maxHeight);
 		}
-		return new Dimension(Math.max(totalWidth, maxWidth), y);
+		else
+		{
+			if (y == 0)
+			{
+				return null;
+			}
+			return new Dimension(Math.max(totalWidth, maxWidth), y);
+		}
 	}
 
 	// ── Helpers ──────────────────────────────────────────────────────────────
 
-	private void drawTimestampAndIcon(Graphics2D graphics, FontMetrics fm,
-		String timestampStr, int timestampWidth,
-		BufferedImage icon, int iconOffsetX,
-		int paddingX, int bubbleY, int paddingY, int textY,
-		Color senderColor, float alpha)
+	private void drawTimestamp(Graphics2D graphics, String timestampStr, int x, int textY, Color senderColor, float alpha)
 	{
 		if (!timestampStr.isEmpty())
 		{
 			Color tc = new Color(senderColor.getRed(), senderColor.getGreen(),
 				senderColor.getBlue(), (int) (senderColor.getAlpha() * alpha));
 			graphics.setColor(new Color(0, 0, 0, tc.getAlpha()));
-			graphics.drawString(timestampStr, paddingX + 1, textY + 1);
+			graphics.drawString(timestampStr, x + 1, textY + 1);
 			graphics.setColor(tc);
-			graphics.drawString(timestampStr, paddingX, textY);
+			graphics.drawString(timestampStr, x, textY);
 		}
+	}
+
+	private void drawIcon(Graphics2D graphics, FontMetrics fm, BufferedImage icon, int x, int bubbleY, int paddingY, float alpha)
+	{
 		if (icon != null)
 		{
 			int iconH = fm.getHeight();
-			int iconW = iconOffsetX - 4;
+			int iconW = (int) ((double) icon.getWidth() * iconH / icon.getHeight());
 			Composite orig = graphics.getComposite();
 			graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-			graphics.drawImage(icon, paddingX + timestampWidth, bubbleY + paddingY, iconW, iconH, null);
+			graphics.drawImage(icon, x, bubbleY + paddingY, iconW, iconH, null);
 			graphics.setComposite(orig);
 		}
 	}
