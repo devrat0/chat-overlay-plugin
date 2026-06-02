@@ -25,7 +25,6 @@ import net.runelite.client.ui.overlay.OverlayPosition;
  */
 public class GameOverlay extends Overlay
 {
-	private static final int ABOVE_PLAYER_OFFSET = 90;
 	private static final int MAX_BUBBLE_WIDTH    = 350;
 
 	private final Client            client;
@@ -112,7 +111,7 @@ public class GameOverlay extends Overlay
 			return null;
 		}
 		Point anchor = localPlayer.getCanvasTextLocation(
-			graphics, "X", localPlayer.getLogicalHeight() + ABOVE_PLAYER_OFFSET);
+			graphics, "X", localPlayer.getLogicalHeight() + config.systemPlayerOffset());
 		if (anchor == null)
 		{
 			return null;

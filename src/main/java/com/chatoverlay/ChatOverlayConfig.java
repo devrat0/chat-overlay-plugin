@@ -732,4 +732,19 @@ public interface ChatOverlayConfig extends Config
 		return false;
 	}
 
+	@ConfigItem(
+		keyName = "systemPlayerOffset",
+		name = "Vertical Offset (Pinned)",
+		description = "Vertical offset in 3D units above/below the player's head when Pinned to Player. "
+			+ "Positive values move it higher, negative values move it lower.",
+		position = 16,
+		section = "system"
+	)
+	@Range(min = -300, max = 300)
+	default int systemPlayerOffset()
+	{
+		return 90;
+	}
+
 }
+
