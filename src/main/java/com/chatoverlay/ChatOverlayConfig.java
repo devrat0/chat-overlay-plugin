@@ -1035,10 +1035,22 @@ public interface ChatOverlayConfig extends Config
 		position = 20,
 		section = "system"
 	)
-	@Range(min = -300, max = 300)
+	@Range(min = -500, max = 500)
 	default int systemPlayerOffset()
 	{
 		return 90;
+	}
+
+	@ConfigItem(
+		keyName = "systemLayoutMode",
+		name = "Layout Mode",
+		description = "Stack messages from top to bottom or bottom to top",
+		position = 21,
+		section = "system"
+	)
+	default LayoutMode systemLayoutMode()
+	{
+		return LayoutMode.BOTTOM_TO_TOP;
 	}
 
 }

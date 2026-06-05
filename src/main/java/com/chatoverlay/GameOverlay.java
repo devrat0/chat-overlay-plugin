@@ -125,6 +125,8 @@ public class GameOverlay extends Overlay
 		int centerX  = anchor.getX() - (int) tx.getTranslateX();
 		int currentY = anchor.getY() - (int) tx.getTranslateY();
 
+		LayoutMode layoutMode = config.systemLayoutMode();
+
 		for (int i = alerts.size() - 1; i >= 0; i--)
 		{
 			ChatLine alert = alerts.get(i);
@@ -161,7 +163,18 @@ public class GameOverlay extends Overlay
 				bubbleWidth  = maxLineW + paddingX * 2;
 				bubbleHeight = fm.getHeight() * lineRanges.size() + paddingY * 2;
 				int bubbleX  = centerX - bubbleWidth / 2;
-				int bubbleY  = currentY - bubbleHeight;
+
+				int bubbleY;
+				if (layoutMode == LayoutMode.BOTTOM_TO_TOP)
+				{
+					bubbleY = currentY - bubbleHeight;
+					currentY = bubbleY - bubbleSpacing;
+				}
+				else
+				{
+					bubbleY = currentY;
+					currentY = bubbleY + bubbleHeight + bubbleSpacing;
+				}
 
 				renderer.drawBubble(graphics, bubbleX, bubbleY, bubbleWidth, bubbleHeight, config.systemBgColor(), alpha);
 				renderer.drawBubbleBorder(graphics, bubbleX, bubbleY, bubbleWidth, bubbleHeight,
@@ -176,7 +189,6 @@ public class GameOverlay extends Overlay
 					renderer.renderSegments(graphics, lineSegs, textStartX, textY, fm, textStartX + lineW);
 					textY += fm.getHeight();
 				}
-				currentY = bubbleY - bubbleSpacing;
 			}
 			else
 			{
@@ -184,7 +196,18 @@ public class GameOverlay extends Overlay
 				bubbleWidth  = textWidth + paddingX * 2;
 				bubbleHeight = fm.getHeight() + paddingY * 2;
 				int bubbleX  = centerX - bubbleWidth / 2;
-				int bubbleY  = currentY - bubbleHeight;
+
+				int bubbleY;
+				if (layoutMode == LayoutMode.BOTTOM_TO_TOP)
+				{
+					bubbleY = currentY - bubbleHeight;
+					currentY = bubbleY - bubbleSpacing;
+				}
+				else
+				{
+					bubbleY = currentY;
+					currentY = bubbleY + bubbleHeight + bubbleSpacing;
+				}
 
 				renderer.drawBubble(graphics, bubbleX, bubbleY, bubbleWidth, bubbleHeight, config.systemBgColor(), alpha);
 				renderer.drawBubbleBorder(graphics, bubbleX, bubbleY, bubbleWidth, bubbleHeight,
@@ -193,7 +216,6 @@ public class GameOverlay extends Overlay
 				int textY      = bubbleY + paddingY + fm.getAscent();
 				int textStartX = centerX - textWidth / 2;
 				renderer.renderSegments(graphics, faded, textStartX, textY, fm, textStartX + textWidth);
-				currentY = bubbleY - bubbleSpacing;
 			}
 		}
 
@@ -212,7 +234,12 @@ public class GameOverlay extends Overlay
 		int y          = 0;
 		int totalWidth = 0;
 
-		for (int i = alerts.size() - 1; i >= 0; i--)
+		LayoutMode layoutMode = config.systemLayoutMode();
+		int startIdx = (layoutMode == LayoutMode.BOTTOM_TO_TOP) ? 0 : alerts.size() - 1;
+		int endIdx   = (layoutMode == LayoutMode.BOTTOM_TO_TOP) ? alerts.size() : -1;
+		int step     = (layoutMode == LayoutMode.BOTTOM_TO_TOP) ? 1 : -1;
+
+		for (int i = startIdx; i != endIdx; i += step)
 		{
 			ChatLine alert = alerts.get(i);
 			float alpha = renderer.computeAlphaWithFadeIn(alert, durationMs);
