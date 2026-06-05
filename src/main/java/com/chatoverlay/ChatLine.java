@@ -2,6 +2,7 @@ package com.chatoverlay;
 
 import java.awt.image.BufferedImage;
 import net.runelite.api.ChatMessageType;
+import net.runelite.api.MessageNode;
 
 /**
  * Represents a single chat message captured from the game.
@@ -20,16 +21,53 @@ public class ChatLine
 	private final String sender;
 	private final String rawSender;
 	private final String rawMessage;
-	private final String plainMessage;
 	private final long timestamp;
 	private final ChatCategory category;
 	private final ChatMessageType chatMessageType;
+	private final MessageNode messageNode;
+
+	private volatile String cachedRawMessage;
+	private volatile String cachedPlainMessage;
 
 	/** The clan or FC channel name (e.g. "Laced PVM"), or null for non-channel messages. */
 	private final String channelName;
 
 	/** Ironman/JMOD icon to display before the sender name, or null if none. Set asynchronously after sprite loading. */
 	private volatile BufferedImage icon;
+
+	public ChatLine(
+		MessageNode messageNode,
+		String sender,
+		String rawSender,
+		String rawMessage,
+		ChatCategory category,
+		ChatMessageType chatMessageType,
+		String channelName)
+	{
+		this.messageNode = messageNode;
+		this.sender = sender == null ? "" : sender;
+		this.rawSender = rawSender == null ? "" : rawSender;
+		this.rawMessage = rawMessage == null ? "" : rawMessage;
+		this.timestamp = System.currentTimeMillis();
+		this.category = category;
+		this.chatMessageType = chatMessageType;
+		this.channelName = channelName;
+
+		String initialRaw = getRawMessage();
+		this.cachedRawMessage = initialRaw;
+		this.cachedPlainMessage = ColorTagParser.stripTags(initialRaw);
+	}
+
+	public ChatLine(
+		MessageNode messageNode,
+		String sender,
+		String rawSender,
+		String rawMessage,
+		ChatCategory category,
+		ChatMessageType chatMessageType)
+	{
+		this(messageNode, sender, rawSender, rawMessage, category, chatMessageType, null);
+	}
 
 	public ChatLine(
 		String sender,
@@ -39,14 +77,7 @@ public class ChatLine
 		ChatMessageType chatMessageType,
 		String channelName)
 	{
-		this.sender = sender == null ? "" : sender;
-		this.rawSender = rawSender == null ? "" : rawSender;
-		this.rawMessage = rawMessage == null ? "" : rawMessage;
-		this.plainMessage = ColorTagParser.stripTags(this.rawMessage);
-		this.timestamp = System.currentTimeMillis();
-		this.category = category;
-		this.chatMessageType = chatMessageType;
-		this.channelName = channelName;
+		this(null, sender, rawSender, rawMessage, category, chatMessageType, channelName);
 	}
 
 	/** Convenience constructor for messages that don't belong to a named channel. */
@@ -57,7 +88,7 @@ public class ChatLine
 		ChatCategory category,
 		ChatMessageType chatMessageType)
 	{
-		this(sender, rawSender, rawMessage, category, chatMessageType, null);
+		this(null, sender, rawSender, rawMessage, category, chatMessageType, null);
 	}
 
 	public String getSender()
@@ -72,12 +103,28 @@ public class ChatLine
 
 	public String getRawMessage()
 	{
+		if (messageNode != null)
+		{
+			String rfmt = messageNode.getRuneLiteFormatMessage();
+			String currentRaw = (rfmt != null && !rfmt.isEmpty()) ? rfmt : messageNode.getValue();
+			if (currentRaw != null)
+			{
+				return currentRaw;
+			}
+		}
 		return rawMessage;
 	}
 
 	public String getPlainMessage()
 	{
-		return plainMessage;
+		String currentRaw = getRawMessage();
+		if (currentRaw.equals(cachedRawMessage))
+		{
+			return cachedPlainMessage;
+		}
+		cachedRawMessage = currentRaw;
+		cachedPlainMessage = ColorTagParser.stripTags(currentRaw);
+		return cachedPlainMessage;
 	}
 
 	public long getTimestamp()

@@ -195,26 +195,26 @@ public class ChatOverlayPlugin extends Plugin
 		switch (type)
 		{
 			case PUBLICCHAT: case MODCHAT: case AUTOTYPER: case MODAUTOTYPER:
-				handlePublicChat(type, sender, rawSenderName, rawMsg);
+				handlePublicChat(event.getMessageNode(), type, sender, rawSenderName, rawMsg);
 				break;
 
 			case CLAN_CHAT: case CLAN_GIM_CHAT: case CLAN_GUEST_CHAT:
 			case CLAN_MESSAGE: case CLAN_GUEST_MESSAGE:
-				handleClanChat(type, sender, rawSenderName, rawMsg);
+				handleClanChat(event.getMessageNode(), type, sender, rawSenderName, rawMsg);
 				break;
 
 			case FRIENDSCHAT:
-				handleFriendsChat(sender, rawSenderName, rawMsg);
+				handleFriendsChat(event.getMessageNode(), sender, rawSenderName, rawMsg);
 				break;
 
 			case PRIVATECHAT: case MODPRIVATECHAT: case PRIVATECHATOUT:
-				handlePrivateChat(type, sender, rawSenderName, rawMsg);
+				handlePrivateChat(event.getMessageNode(), type, sender, rawSenderName, rawMsg);
 				break;
 
 			case GAMEMESSAGE: case ENGINE: case SPAM:
 			case BROADCAST: case FRIENDSCHATNOTIFICATION: case FRIENDNOTIFICATION:
 			case LOGINLOGOUTNOTIFICATION: case WELCOME:
-				handleSystemMessage(type, rawMsg, lower);
+				handleSystemMessage(event.getMessageNode(), type, rawMsg, lower);
 				break;
 
 			default:
@@ -224,18 +224,18 @@ public class ChatOverlayPlugin extends Plugin
 
 	// ── onChatMessage handlers ─────────────────────────────────────────────
 
-	private void handlePublicChat(ChatMessageType type, String sender, String rawSenderName, String rawMsg)
+	private void handlePublicChat(net.runelite.api.MessageNode messageNode, ChatMessageType type, String sender, String rawSenderName, String rawMsg)
 	{
 		if (!config.showPublicChat())
 		{
 			return;
 		}
-		ChatLine line = new ChatLine(sender, rawSenderName, rawMsg, ChatCategory.PUBLIC, type);
+		ChatLine line = new ChatLine(messageNode, sender, rawSenderName, rawMsg, ChatCategory.PUBLIC, type);
 		iconLoader.resolveAndSetIcon(line, iconLoader.extractIconId(rawSenderName));
 		messageManager.addPublicClanMessage(line, config.publicMaxMessages());
 	}
 
-	private void handleClanChat(ChatMessageType type, String sender, String rawSenderName, String rawMsg)
+	private void handleClanChat(net.runelite.api.MessageNode messageNode, ChatMessageType type, String sender, String rawSenderName, String rawMsg)
 	{
 		if (!config.showClanChat() && !config.showClanChatOverlay())
 		{
@@ -252,7 +252,7 @@ public class ChatOverlayPlugin extends Plugin
 				channelName = channelNames.getClanChannelName();
 				break;
 		}
-		ChatLine line = new ChatLine(sender, rawSenderName, rawMsg, ChatCategory.CLAN, type, channelName);
+		ChatLine line = new ChatLine(messageNode, sender, rawSenderName, rawMsg, ChatCategory.CLAN, type, channelName);
 		iconLoader.resolveAndSetIcon(line, iconLoader.extractIconId(rawSenderName));
 		if (config.showClanChat())
 		{
@@ -280,13 +280,13 @@ public class ChatOverlayPlugin extends Plugin
 		}
 	}
 
-	private void handleFriendsChat(String sender, String rawSenderName, String rawMsg)
+	private void handleFriendsChat(net.runelite.api.MessageNode messageNode, String sender, String rawSenderName, String rawMsg)
 	{
 		if (!config.showFriendsChat() && !config.showClanChatOverlay())
 		{
 			return;
 		}
-		ChatLine line = new ChatLine(sender, rawSenderName, rawMsg,
+		ChatLine line = new ChatLine(messageNode, sender, rawSenderName, rawMsg,
 			ChatCategory.FRIENDS_CHAT, ChatMessageType.FRIENDSCHAT, channelNames.getFriendsChatName());
 		iconLoader.resolveAndSetIcon(line, iconLoader.extractIconId(rawSenderName));
 		if (config.showFriendsChat())
@@ -299,11 +299,11 @@ public class ChatOverlayPlugin extends Plugin
 		}
 	}
 
-	private void handlePrivateChat(ChatMessageType type, String sender, String rawSenderName, String rawMsg)
+	private void handlePrivateChat(net.runelite.api.MessageNode messageNode, ChatMessageType type, String sender, String rawSenderName, String rawMsg)
 	{
 		boolean incoming = type != ChatMessageType.PRIVATECHATOUT;
 		String prefix    = incoming ? "From " : "To ";
-		ChatLine line    = new ChatLine(prefix + sender, prefix + rawSenderName, rawMsg, ChatCategory.PRIVATE, type);
+		ChatLine line    = new ChatLine(messageNode, prefix + sender, prefix + rawSenderName, rawMsg, ChatCategory.PRIVATE, type);
 		if (incoming)
 		{
 			iconLoader.resolveAndSetIcon(line, iconLoader.extractIconId(rawSenderName));
@@ -331,7 +331,7 @@ public class ChatOverlayPlugin extends Plugin
 			|| (config.filterConsumablesSpam() && filterMatcher.matchesConsumables(lower));
 	}
 
-	private void handleSystemMessage(ChatMessageType type, String rawMsg, String lower)
+	private void handleSystemMessage(net.runelite.api.MessageNode messageNode, ChatMessageType type, String rawMsg, String lower)
 	{
 		int gameFilter = client.getVarbitValue(VarbitID.GAME_FILTER);
 
@@ -343,7 +343,7 @@ public class ChatOverlayPlugin extends Plugin
 				if (gameFilter == 2) return; // Off
 				boolean blocked = isSystemMessageFiltered(lower);
 				if (blocked) return;
-				addSystemLine(rawMsg, type, true);
+				addSystemLine(messageNode, rawMsg, type, true);
 				break;
 			}
 			case SPAM:
@@ -351,12 +351,12 @@ public class ChatOverlayPlugin extends Plugin
 				if (gameFilter != 0) return; // Filter or Off
 				boolean blocked = isSystemMessageFiltered(lower);
 				if (blocked) return;
-				addSystemLine(rawMsg, type, true);
+				addSystemLine(messageNode, rawMsg, type, true);
 				break;
 			}
 			case BROADCAST:
 			{
-				ChatLine line = new ChatLine(null, null, rawMsg, ChatCategory.SYSTEM, type);
+				ChatLine line = new ChatLine(messageNode, null, null, rawMsg, ChatCategory.SYSTEM, type);
 				if (config.showSystemAlerts())
 				{
 					messageManager.addSystemMessage(line, config.systemMaxAlerts(), false, 0L);
@@ -379,7 +379,7 @@ public class ChatOverlayPlugin extends Plugin
 				if (!blocked && config.showSystemAlerts())
 				{
 					messageManager.addSystemMessage(
-						new ChatLine(null, null, rawMsg, ChatCategory.SYSTEM, type),
+						new ChatLine(messageNode, null, null, rawMsg, ChatCategory.SYSTEM, type),
 						config.systemMaxAlerts(), config.filterSpamAlerts(),
 						config.spamCooldownSeconds() * 1000L);
 				}
@@ -387,7 +387,7 @@ public class ChatOverlayPlugin extends Plugin
 			}
 			case WELCOME:
 			{
-				ChatLine line = new ChatLine(null, null, rawMsg, ChatCategory.SYSTEM, type);
+				ChatLine line = new ChatLine(messageNode, null, null, rawMsg, ChatCategory.SYSTEM, type);
 				if (config.showSystemAlerts())
 				{
 					messageManager.addSystemMessage(line, config.systemMaxAlerts(), false, 0L);
@@ -404,9 +404,9 @@ public class ChatOverlayPlugin extends Plugin
 	}
 
 	/** Creates and queues a standard system line (used for GAMEMESSAGE, ENGINE, SPAM). */
-	private void addSystemLine(String rawMsg, ChatMessageType type, boolean useFilter)
+	private void addSystemLine(net.runelite.api.MessageNode messageNode, String rawMsg, ChatMessageType type, boolean useFilter)
 	{
-		ChatLine line = new ChatLine(null, null, rawMsg, ChatCategory.SYSTEM, type);
+		ChatLine line = new ChatLine(messageNode, null, null, rawMsg, ChatCategory.SYSTEM, type);
 		if (config.showSystemAlerts())
 		{
 			messageManager.addSystemMessage(line, config.systemMaxAlerts(),
