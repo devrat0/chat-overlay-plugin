@@ -125,6 +125,8 @@ public class GameOverlay extends Overlay
 		int centerX  = anchor.getX() - (int) tx.getTranslateX();
 		int currentY = anchor.getY() - (int) tx.getTranslateY();
 
+		LayoutMode layoutMode = config.systemLayoutMode();
+
 		for (int i = alerts.size() - 1; i >= 0; i--)
 		{
 			ChatLine alert = alerts.get(i);
@@ -148,7 +150,7 @@ public class GameOverlay extends Overlay
 
 			if (config.systemWordWrap())
 			{
-				List<int[]> lineRanges = renderer.wrapText(plain, fm, innerWidth);
+				List<int[]> lineRanges = renderer.wrapText(faded, fm, innerWidth);
 				if (lineRanges.isEmpty())
 				{
 					continue;
@@ -156,12 +158,23 @@ public class GameOverlay extends Overlay
 				int maxLineW = 0;
 				for (int[] range : lineRanges)
 				{
-					maxLineW = Math.max(maxLineW, fm.stringWidth(plain.substring(range[0], range[1])));
+					maxLineW = Math.max(maxLineW, renderer.getSlicedSegmentsWidth(faded, range[0], range[1], fm));
 				}
 				bubbleWidth  = maxLineW + paddingX * 2;
 				bubbleHeight = fm.getHeight() * lineRanges.size() + paddingY * 2;
 				int bubbleX  = centerX - bubbleWidth / 2;
-				int bubbleY  = currentY - bubbleHeight;
+
+				int bubbleY;
+				if (layoutMode == LayoutMode.BOTTOM_TO_TOP)
+				{
+					bubbleY = currentY - bubbleHeight;
+					currentY = bubbleY - bubbleSpacing;
+				}
+				else
+				{
+					bubbleY = currentY;
+					currentY = bubbleY + bubbleHeight + bubbleSpacing;
+				}
 
 				renderer.drawBubble(graphics, bubbleX, bubbleY, bubbleWidth, bubbleHeight, config.systemBgColor(), alpha);
 				renderer.drawBubbleBorder(graphics, bubbleX, bubbleY, bubbleWidth, bubbleHeight,
@@ -171,20 +184,30 @@ public class GameOverlay extends Overlay
 				for (int[] range : lineRanges)
 				{
 					List<ColorSegment> lineSegs = renderer.sliceSegments(faded, range[0], range[1]);
-					int lineW      = fm.stringWidth(plain.substring(range[0], range[1]));
+					int lineW      = renderer.getSlicedSegmentsWidth(faded, range[0], range[1], fm);
 					int textStartX = centerX - lineW / 2;
 					renderer.renderSegments(graphics, lineSegs, textStartX, textY, fm, textStartX + lineW);
 					textY += fm.getHeight();
 				}
-				currentY = bubbleY - bubbleSpacing;
 			}
 			else
 			{
-				int textWidth = Math.min(fm.stringWidth(plain), innerWidth);
+				int textWidth = Math.min(renderer.getSegmentsWidth(faded, fm), innerWidth);
 				bubbleWidth  = textWidth + paddingX * 2;
 				bubbleHeight = fm.getHeight() + paddingY * 2;
 				int bubbleX  = centerX - bubbleWidth / 2;
-				int bubbleY  = currentY - bubbleHeight;
+
+				int bubbleY;
+				if (layoutMode == LayoutMode.BOTTOM_TO_TOP)
+				{
+					bubbleY = currentY - bubbleHeight;
+					currentY = bubbleY - bubbleSpacing;
+				}
+				else
+				{
+					bubbleY = currentY;
+					currentY = bubbleY + bubbleHeight + bubbleSpacing;
+				}
 
 				renderer.drawBubble(graphics, bubbleX, bubbleY, bubbleWidth, bubbleHeight, config.systemBgColor(), alpha);
 				renderer.drawBubbleBorder(graphics, bubbleX, bubbleY, bubbleWidth, bubbleHeight,
@@ -193,7 +216,6 @@ public class GameOverlay extends Overlay
 				int textY      = bubbleY + paddingY + fm.getAscent();
 				int textStartX = centerX - textWidth / 2;
 				renderer.renderSegments(graphics, faded, textStartX, textY, fm, textStartX + textWidth);
-				currentY = bubbleY - bubbleSpacing;
 			}
 		}
 
@@ -212,7 +234,12 @@ public class GameOverlay extends Overlay
 		int y          = 0;
 		int totalWidth = 0;
 
-		for (int i = alerts.size() - 1; i >= 0; i--)
+		LayoutMode layoutMode = config.systemLayoutMode();
+		int startIdx = (layoutMode == LayoutMode.BOTTOM_TO_TOP) ? 0 : alerts.size() - 1;
+		int endIdx   = (layoutMode == LayoutMode.BOTTOM_TO_TOP) ? alerts.size() : -1;
+		int step     = (layoutMode == LayoutMode.BOTTOM_TO_TOP) ? 1 : -1;
+
+		for (int i = startIdx; i != endIdx; i += step)
 		{
 			ChatLine alert = alerts.get(i);
 			float alpha = renderer.computeAlphaWithFadeIn(alert, durationMs);
@@ -235,7 +262,7 @@ public class GameOverlay extends Overlay
 
 			if (config.systemWordWrap())
 			{
-				List<int[]> lineRanges = renderer.wrapText(plain, fm, innerWidth);
+				List<int[]> lineRanges = renderer.wrapText(faded, fm, innerWidth);
 				if (lineRanges.isEmpty())
 				{
 					continue;
@@ -243,7 +270,7 @@ public class GameOverlay extends Overlay
 				int maxLineW = 0;
 				for (int[] range : lineRanges)
 				{
-					maxLineW = Math.max(maxLineW, fm.stringWidth(plain.substring(range[0], range[1])));
+					maxLineW = Math.max(maxLineW, renderer.getSlicedSegmentsWidth(faded, range[0], range[1], fm));
 				}
 				bubbleWidth  = maxLineW + paddingX * 2;
 				bubbleHeight = fm.getHeight() * lineRanges.size() + paddingY * 2;
@@ -256,14 +283,14 @@ public class GameOverlay extends Overlay
 				for (int[] range : lineRanges)
 				{
 					List<ColorSegment> lineSegs = renderer.sliceSegments(faded, range[0], range[1]);
-					int lineW = fm.stringWidth(plain.substring(range[0], range[1]));
+					int lineW = renderer.getSlicedSegmentsWidth(faded, range[0], range[1], fm);
 					renderer.renderSegments(graphics, lineSegs, paddingX, textY, fm, paddingX + lineW);
 					textY += fm.getHeight();
 				}
 			}
 			else
 			{
-				int textWidth = Math.min(fm.stringWidth(plain), innerWidth);
+				int textWidth = Math.min(renderer.getSegmentsWidth(faded, fm), innerWidth);
 				bubbleWidth  = textWidth + paddingX * 2;
 				bubbleHeight = fm.getHeight() + paddingY * 2;
 
@@ -308,7 +335,7 @@ public class GameOverlay extends Overlay
 	private AlertContent buildAlert(ChatLine alert, float alpha)
 	{
 		Color           msgColor = colorResolver.getChatColor(alert.getChatMessageType(), ChatColorType.HIGHLIGHT);
-		ChatLineBuilder builder  = new ChatLineBuilder(msgColor, colorResolver.getChatColorConfig());
+		ChatLineBuilder builder  = new ChatLineBuilder(client, msgColor, colorResolver.getChatColorConfig());
 		if (config.systemShowTimestamp())
 		{
 			LocalTime time = LocalTime.ofInstant(

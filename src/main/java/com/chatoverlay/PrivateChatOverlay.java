@@ -15,6 +15,7 @@ import java.time.ZoneId;
 import java.util.List;
 import javax.inject.Inject;
 import net.runelite.api.ChatMessageType;
+import net.runelite.api.Client;
 import net.runelite.client.chat.ChatColorType;
 import net.runelite.client.config.ChatColorConfig;
 import net.runelite.client.ui.overlay.Overlay;
@@ -26,15 +27,17 @@ import net.runelite.client.ui.overlay.OverlayPosition;
  */
 public class PrivateChatOverlay extends Overlay
 {
+	private final Client client;
 	private final ChatOverlayPlugin plugin;
 	private final ChatOverlayConfig config;
 	private final BubbleRenderer    renderer;
 	private final ChatColorResolver colorResolver;
 
 	@Inject
-	public PrivateChatOverlay(ChatOverlayPlugin plugin, ChatOverlayConfig config,
+	public PrivateChatOverlay(Client client, ChatOverlayPlugin plugin, ChatOverlayConfig config,
 		BubbleRenderer renderer, ChatColorResolver colorResolver)
 	{
+		this.client        = client;
 		this.plugin        = plugin;
 		this.config        = config;
 		this.renderer      = renderer;
@@ -130,7 +133,7 @@ public class PrivateChatOverlay extends Overlay
 				iconOffsetX = iconW + 4;
 			}
 
-			ChatLineBuilder builder = new ChatLineBuilder(msgColor, colorResolver.getChatColorConfig());
+			ChatLineBuilder builder = new ChatLineBuilder(client, msgColor, colorResolver.getChatColorConfig());
 			builder.append(line.getRawSender(), senderColor);
 			builder.append(": ");
 			builder.append(line.getRawMessage());
@@ -146,7 +149,7 @@ public class PrivateChatOverlay extends Overlay
 
 			if (config.privateWordWrap())
 			{
-				List<int[]> lineRanges = renderer.wrapText(plain, fm, innerWidth);
+				List<int[]> lineRanges = renderer.wrapText(faded, fm, innerWidth);
 				if (lineRanges.isEmpty())
 				{
 					continue;
@@ -154,7 +157,7 @@ public class PrivateChatOverlay extends Overlay
 				int maxLineW = 0;
 				for (int[] range : lineRanges)
 				{
-					maxLineW = Math.max(maxLineW, fm.stringWidth(plain.substring(range[0], range[1])));
+					maxLineW = Math.max(maxLineW, renderer.getSlicedSegmentsWidth(faded, range[0], range[1], fm));
 				}
 				bubbleWidth  = maxLineW + timestampWidth + iconOffsetX + paddingX * 2;
 				bubbleHeight = fm.getHeight() * lineRanges.size() + paddingY * 2;
@@ -182,7 +185,7 @@ public class PrivateChatOverlay extends Overlay
 				for (int[] range : lineRanges)
 				{
 					List<ColorSegment> lineSegs = renderer.sliceSegments(faded, range[0], range[1]);
-					int lineW = fm.stringWidth(plain.substring(range[0], range[1]));
+					int lineW = renderer.getSlicedSegmentsWidth(faded, range[0], range[1], fm);
 
 					if (isFirst && icon != null)
 					{
@@ -210,7 +213,7 @@ public class PrivateChatOverlay extends Overlay
 							drawIcon(graphics, fm, icon, startX + prefixW, bubbleY, paddingY, alpha);
 
 							int contentStartX = startX + prefixW + iconOffsetX;
-							int contentW = fm.stringWidth(plain.substring(prefixLen, range[1]));
+							int contentW = renderer.getSlicedSegmentsWidth(faded, prefixLen, range[1], fm);
 							renderer.renderSegments(graphics, senderSegs, contentStartX, textY, fm, contentStartX + contentW);
 						}
 						isFirst = false;
@@ -224,7 +227,7 @@ public class PrivateChatOverlay extends Overlay
 			}
 			else
 			{
-				int textWidth = Math.min(fm.stringWidth(plain), innerWidth);
+				int textWidth = Math.min(renderer.getSegmentsWidth(faded, fm), innerWidth);
 				bubbleWidth  = textWidth + timestampWidth + iconOffsetX + paddingX * 2;
 				bubbleHeight = fm.getHeight() + paddingY * 2;
 

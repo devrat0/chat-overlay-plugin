@@ -1,11 +1,13 @@
 package com.chatoverlay;
 
 import java.awt.Color;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.Getter;
+import net.runelite.api.Client;
 import net.runelite.client.config.ChatColorConfig;
 
 /**
@@ -18,7 +20,7 @@ public class ChatLineBuilder
 		"<col=([0-9a-fA-F]{3,6})>"   // group 1: hex color
 		+ "|</col>"                    // color end
 		+ "|<col(NORMAL|HIGHLIGHT)>"   // group 2: named color
-		+ "|<img=\\d+>"               // icon (stripped)
+		+ "|<img=(\\d+)>"              // group 3: icon ID
 		+ "|<br>"                      // line break → space
 		+ "|<lt>"                      // entity: <
 		+ "|<gt>"                      // entity: >
@@ -29,14 +31,21 @@ public class ChatLineBuilder
 	private final List<ColorSegment> segments = new ArrayList<>();
 	private final Color baseColor;
 	private final ChatColorConfig chatColorConfig;
+	private final Client client;
 
 	public ChatLineBuilder(Color baseColor)
 	{
-		this(baseColor, null);
+		this(null, baseColor, null);
 	}
 
 	public ChatLineBuilder(Color baseColor, ChatColorConfig chatColorConfig)
 	{
+		this(null, baseColor, chatColorConfig);
+	}
+
+	public ChatLineBuilder(Client client, Color baseColor, ChatColorConfig chatColorConfig)
+	{
+		this.client = client;
 		this.baseColor = baseColor;
 		this.chatColorConfig = chatColorConfig;
 	}
@@ -101,6 +110,25 @@ public class ChatLineBuilder
 						catch (Exception ignored) {}
 					}
 					currentColor = highlight != null ? highlight : defaultColor;
+				}
+			}
+			else if (m.group(3) != null)
+			{
+				int imgId = -1;
+				try
+				{
+					imgId = Integer.parseInt(m.group(3));
+				}
+				catch (NumberFormatException ignored) {}
+
+				if (imgId >= 0 && client != null)
+				{
+					net.runelite.api.IndexedSprite[] modIcons = client.getModIcons();
+					if (modIcons != null && imgId < modIcons.length && modIcons[imgId] != null)
+					{
+						BufferedImage img = PlayerIconLoader.toBufferedImage(modIcons[imgId]);
+						segments.add(new ColorSegment(img, imgId));
+					}
 				}
 			}
 			else if (lowerMatch.equals("<lt>"))

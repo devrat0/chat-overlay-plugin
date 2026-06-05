@@ -14,6 +14,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.List;
 import javax.inject.Inject;
+import net.runelite.api.Client;
 import net.runelite.client.chat.ChatColorType;
 import net.runelite.client.config.ChatColorConfig;
 import net.runelite.client.ui.overlay.Overlay;
@@ -25,15 +26,17 @@ import net.runelite.client.ui.overlay.OverlayPosition;
  */
 public class PublicClanChatOverlay extends Overlay
 {
+	private final Client client;
 	private final ChatOverlayPlugin plugin;
 	private final ChatOverlayConfig config;
 	private final BubbleRenderer    renderer;
 	private final ChatColorResolver colorResolver;
 
 	@Inject
-	public PublicClanChatOverlay(ChatOverlayPlugin plugin, ChatOverlayConfig config,
+	public PublicClanChatOverlay(Client client, ChatOverlayPlugin plugin, ChatOverlayConfig config,
 		BubbleRenderer renderer, ChatColorResolver colorResolver)
 	{
+		this.client        = client;
 		this.plugin        = plugin;
 		this.config        = config;
 		this.renderer      = renderer;
@@ -95,7 +98,7 @@ public class PublicClanChatOverlay extends Overlay
 				Color  typingSender = new Color(255, 255, 255);
 				Color  typingMsg    = new Color(255, 255, 0);
 
-				ChatLineBuilder typingBuilder = new ChatLineBuilder(typingMsg, colorResolver.getChatColorConfig());
+				ChatLineBuilder typingBuilder = new ChatLineBuilder(client, typingMsg, colorResolver.getChatColorConfig());
 				typingBuilder.append(displayName + ": ", typingSender);
 				typingBuilder.append(typedText);
 
@@ -108,13 +111,13 @@ public class PublicClanChatOverlay extends Overlay
 
 				if (config.publicWordWrap())
 				{
-					List<int[]> lineRanges = renderer.wrapText(typingPlain, fm, innerWidth);
+					List<int[]> lineRanges = renderer.wrapText(typingSegs, fm, innerWidth);
 					if (!lineRanges.isEmpty())
 					{
 						int maxLineW = 0;
 						for (int[] range : lineRanges)
 						{
-							maxLineW = Math.max(maxLineW, fm.stringWidth(typingPlain.substring(range[0], range[1])));
+							maxLineW = Math.max(maxLineW, renderer.getSlicedSegmentsWidth(typingSegs, range[0], range[1], fm));
 						}
 						bubbleWidth  = maxLineW + paddingX * 2;
 						bubbleHeight = fm.getHeight() * lineRanges.size() + paddingY * 2;
@@ -126,7 +129,7 @@ public class PublicClanChatOverlay extends Overlay
 						for (int[] range : lineRanges)
 						{
 							List<ColorSegment> lineSegs = renderer.sliceSegments(typingSegs, range[0], range[1]);
-							int lineW = fm.stringWidth(typingPlain.substring(range[0], range[1]));
+							int lineW = renderer.getSlicedSegmentsWidth(typingSegs, range[0], range[1], fm);
 							renderer.renderSegments(graphics, lineSegs, paddingX, textY, fm, paddingX + lineW);
 							textY += fm.getHeight();
 						}
@@ -136,7 +139,7 @@ public class PublicClanChatOverlay extends Overlay
 				}
 				else
 				{
-					int textWidth = Math.min(fm.stringWidth(typingPlain), innerWidth);
+					int textWidth = Math.min(renderer.getSegmentsWidth(typingSegs, fm), innerWidth);
 					bubbleWidth  = textWidth + paddingX * 2;
 					bubbleHeight = fm.getHeight() + paddingY * 2;
 
@@ -194,7 +197,7 @@ public class PublicClanChatOverlay extends Overlay
 				iconOffsetX = iconW + 4;
 			}
 
-			ChatLineBuilder builder     = new ChatLineBuilder(msgColor, colorResolver.getChatColorConfig());
+			ChatLineBuilder builder     = new ChatLineBuilder(client, msgColor, colorResolver.getChatColorConfig());
 			String          channelName = line.getChannelName();
 			if (channelName != null && !channelName.isEmpty())
 			{
@@ -218,7 +221,7 @@ public class PublicClanChatOverlay extends Overlay
 
 			if (config.publicWordWrap())
 			{
-				List<int[]> lineRanges = renderer.wrapText(plain, fm, innerWidth);
+				List<int[]> lineRanges = renderer.wrapText(faded, fm, innerWidth);
 				if (lineRanges.isEmpty())
 				{
 					continue;
@@ -226,7 +229,7 @@ public class PublicClanChatOverlay extends Overlay
 				int maxLineW = 0;
 				for (int[] range : lineRanges)
 				{
-					maxLineW = Math.max(maxLineW, fm.stringWidth(plain.substring(range[0], range[1])));
+					maxLineW = Math.max(maxLineW, renderer.getSlicedSegmentsWidth(faded, range[0], range[1], fm));
 				}
 				bubbleWidth  = maxLineW + timestampWidth + iconOffsetX + paddingX * 2;
 				bubbleHeight = fm.getHeight() * lineRanges.size() + paddingY * 2;
@@ -254,7 +257,7 @@ public class PublicClanChatOverlay extends Overlay
 				for (int[] range : lineRanges)
 				{
 					List<ColorSegment> lineSegs = renderer.sliceSegments(faded, range[0], range[1]);
-					int lineW = fm.stringWidth(plain.substring(range[0], range[1]));
+					int lineW = renderer.getSlicedSegmentsWidth(faded, range[0], range[1], fm);
 
 					if (isFirst && icon != null)
 					{
@@ -281,7 +284,7 @@ public class PublicClanChatOverlay extends Overlay
 							drawIcon(graphics, fm, icon, startX + chanW, bubbleY, paddingY, alpha);
 
 							int contentStartX = startX + chanW + iconOffsetX;
-							int contentW = fm.stringWidth(plain.substring(chanLen, range[1]));
+							int contentW = renderer.getSlicedSegmentsWidth(faded, chanLen, range[1], fm);
 							renderer.renderSegments(graphics, senderSegs, contentStartX, textY, fm, contentStartX + contentW);
 						}
 						isFirst = false;
@@ -295,7 +298,7 @@ public class PublicClanChatOverlay extends Overlay
 			}
 			else
 			{
-				int textWidth = Math.min(fm.stringWidth(plain), innerWidth);
+				int textWidth = Math.min(renderer.getSegmentsWidth(faded, fm), innerWidth);
 				bubbleWidth  = textWidth + timestampWidth + iconOffsetX + paddingX * 2;
 				bubbleHeight = fm.getHeight() + paddingY * 2;
 
@@ -375,7 +378,7 @@ public class PublicClanChatOverlay extends Overlay
 				Color  typingSender = new Color(255, 255, 255);
 				Color  typingMsg    = new Color(255, 255, 0);
 
-				ChatLineBuilder typingBuilder = new ChatLineBuilder(typingMsg, colorResolver.getChatColorConfig());
+				ChatLineBuilder typingBuilder = new ChatLineBuilder(client, typingMsg, colorResolver.getChatColorConfig());
 				typingBuilder.append(displayName + ": ", typingSender);
 				typingBuilder.append(typedText);
 
@@ -388,13 +391,13 @@ public class PublicClanChatOverlay extends Overlay
 
 				if (config.publicWordWrap())
 				{
-					List<int[]> lineRanges = renderer.wrapText(typingPlain, fm, innerWidth);
+					List<int[]> lineRanges = renderer.wrapText(typingSegs, fm, innerWidth);
 					if (!lineRanges.isEmpty())
 					{
 						int maxLineW = 0;
 						for (int[] range : lineRanges)
 						{
-							maxLineW = Math.max(maxLineW, fm.stringWidth(typingPlain.substring(range[0], range[1])));
+							maxLineW = Math.max(maxLineW, renderer.getSlicedSegmentsWidth(typingSegs, range[0], range[1], fm));
 						}
 						bubbleWidth  = maxLineW + paddingX * 2;
 						bubbleHeight = fm.getHeight() * lineRanges.size() + paddingY * 2;
@@ -405,7 +408,7 @@ public class PublicClanChatOverlay extends Overlay
 						for (int[] range : lineRanges)
 						{
 							List<ColorSegment> lineSegs = renderer.sliceSegments(typingSegs, range[0], range[1]);
-							int lineW = fm.stringWidth(typingPlain.substring(range[0], range[1]));
+							int lineW = renderer.getSlicedSegmentsWidth(typingSegs, range[0], range[1], fm);
 							renderer.renderSegments(graphics, lineSegs, paddingX, textY, fm, paddingX + lineW);
 							textY += fm.getHeight();
 						}
@@ -415,7 +418,7 @@ public class PublicClanChatOverlay extends Overlay
 				}
 				else
 				{
-					int textWidth = Math.min(fm.stringWidth(typingPlain), innerWidth);
+					int textWidth = Math.min(renderer.getSegmentsWidth(typingSegs, fm), innerWidth);
 					bubbleWidth  = textWidth + paddingX * 2;
 					bubbleHeight = fm.getHeight() + paddingY * 2;
 

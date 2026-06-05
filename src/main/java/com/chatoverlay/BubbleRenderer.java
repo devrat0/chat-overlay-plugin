@@ -1,7 +1,9 @@
 package com.chatoverlay;
 
+import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Composite;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
@@ -120,8 +122,15 @@ public class BubbleRenderer
 		for (ColorSegment s : segments)
 		{
 			Color c = s.getColor();
-			result.add(new ColorSegment(s.getText(),
-				new Color(c.getRed(), c.getGreen(), c.getBlue(), (int) (c.getAlpha() * alpha))));
+			Color newColor = new Color(c.getRed(), c.getGreen(), c.getBlue(), (int) (c.getAlpha() * alpha));
+			if (s.getImage() != null)
+			{
+				result.add(new ColorSegment(s.getImage(), s.getImageId(), newColor));
+			}
+			else
+			{
+				result.add(new ColorSegment(s.getText(), newColor));
+			}
 		}
 		return result;
 	}
@@ -180,6 +189,11 @@ public class BubbleRenderer
 			{
 				break;
 			}
+			if (seg.getImage() != null)
+			{
+				shadowX += seg.getImage().getWidth() + 2;
+				continue;
+			}
 			String text = clipIfNeeded(seg.getText(), fm, maxX - shadowX);
 			if (text.isEmpty())
 			{
@@ -197,6 +211,24 @@ public class BubbleRenderer
 			{
 				break;
 			}
+			if (seg.getImage() != null)
+			{
+				java.awt.image.BufferedImage img = seg.getImage();
+				int imgW = img.getWidth();
+				int imgH = img.getHeight();
+				if (x + imgW > maxX)
+				{
+					break;
+				}
+				int imgY = y - fm.getAscent() + (fm.getAscent() - imgH) / 2;
+				float imgAlpha = seg.getColor().getAlpha() / 255.0f;
+				Composite orig = graphics.getComposite();
+				graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, imgAlpha));
+				graphics.drawImage(img, x + 1, imgY, null);
+				graphics.setComposite(orig);
+				x += imgW + 2;
+				continue;
+			}
 			String text = clipIfNeeded(seg.getText(), fm, maxX - x);
 			if (text.isEmpty())
 			{
@@ -211,6 +243,123 @@ public class BubbleRenderer
 	}
 
 	// ── Text layout ──────────────────────────────────────────────────────────
+
+	public int getSegmentsWidth(List<ColorSegment> segments, FontMetrics fm)
+	{
+		int width = 0;
+		for (ColorSegment seg : segments)
+		{
+			if (seg.getImage() != null)
+			{
+				width += seg.getImage().getWidth() + 2;
+			}
+			else
+			{
+				width += fm.stringWidth(seg.getText());
+			}
+		}
+		return width;
+	}
+
+	public int getSlicedSegmentsWidth(List<ColorSegment> segments, int start, int end, FontMetrics fm)
+	{
+		List<ColorSegment> sliced = sliceSegments(segments, start, end);
+		return getSegmentsWidth(sliced, fm);
+	}
+
+	/**
+	 * Word wraps a list of color segments (which may contain inline images) by
+	 * constructing a coordinate mapping of character offsets to custom segment/character widths.
+	 */
+	public List<int[]> wrapText(List<ColorSegment> segments, FontMetrics fm, int maxWidth)
+	{
+		List<Integer> charWidths = new ArrayList<>();
+		StringBuilder sb = new StringBuilder();
+
+		for (ColorSegment seg : segments)
+		{
+			if (seg.getImage() != null)
+			{
+				sb.append(' '); // Use space as 1-char placeholder
+				charWidths.add(seg.getImage().getWidth() + 2);
+			}
+			else
+			{
+				String txt = seg.getText();
+				for (int i = 0; i < txt.length(); i++)
+				{
+					sb.append(txt.charAt(i));
+					charWidths.add(fm.charWidth(txt.charAt(i)));
+				}
+			}
+		}
+
+		String text = sb.toString();
+		List<int[]> lines = new ArrayList<>();
+		if (text.isEmpty())
+		{
+			return lines;
+		}
+
+		int totalW = 0;
+		for (int w : charWidths)
+		{
+			totalW += w;
+		}
+		if (totalW <= maxWidth)
+		{
+			lines.add(new int[]{0, text.length()});
+			return lines;
+		}
+
+		int lineStart = 0;
+		int lastSpace = -1;
+		int i         = lineStart;
+
+		while (i < text.length())
+		{
+			if (text.charAt(i) == ' ')
+			{
+				lastSpace = i;
+			}
+
+			int curWidth = 0;
+			for (int j = lineStart; j <= i; j++)
+			{
+				curWidth += charWidths.get(j);
+			}
+
+			if (curWidth > maxWidth)
+			{
+				if (lastSpace > lineStart)
+				{
+					lines.add(new int[]{lineStart, lastSpace});
+					lineStart = lastSpace + 1;
+					lastSpace = -1;
+					i = lineStart;
+				}
+				else
+				{
+					int breakAt = i > lineStart ? i : i + 1;
+					lines.add(new int[]{lineStart, breakAt});
+					lineStart = breakAt;
+					lastSpace = -1;
+					i = lineStart;
+				}
+			}
+			else
+			{
+				i++;
+			}
+		}
+
+		if (lineStart < text.length())
+		{
+			lines.add(new int[]{lineStart, text.length()});
+		}
+
+		return lines;
+	}
 
 	/**
 	 * Returns a list of [start, end) char ranges that fit within {@code maxWidth},
@@ -277,7 +426,7 @@ public class BubbleRenderer
 		int pos = 0;
 		for (ColorSegment seg : segments)
 		{
-			String text   = seg.getText();
+			String text = seg.getImage() != null ? " " : seg.getText();
 			int    segEnd = pos + text.length();
 			if (segEnd <= start)
 			{
@@ -292,7 +441,14 @@ public class BubbleRenderer
 			int to   = Math.min(text.length(), end - pos);
 			if (from < to)
 			{
-				result.add(new ColorSegment(text.substring(from, to), seg.getColor()));
+				if (seg.getImage() != null)
+				{
+					result.add(seg);
+				}
+				else
+				{
+					result.add(new ColorSegment(text.substring(from, to), seg.getColor()));
+				}
 			}
 			pos = segEnd;
 		}

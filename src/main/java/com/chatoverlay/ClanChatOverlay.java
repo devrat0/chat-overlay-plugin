@@ -15,6 +15,7 @@ import java.time.ZoneId;
 import java.util.List;
 import javax.inject.Inject;
 
+import net.runelite.api.Client;
 import net.runelite.client.chat.ChatColorType;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
@@ -24,14 +25,16 @@ import net.runelite.client.ui.overlay.OverlayPosition;
  * Dedicated overlay for Clan, Guest Clan, GIM, and Friends Chat messages.
  */
 public class ClanChatOverlay extends Overlay {
+    private final Client client;
     private final ChatOverlayPlugin plugin;
     private final ChatOverlayConfig config;
     private final BubbleRenderer renderer;
     private final ChatColorResolver colorResolver;
 
     @Inject
-    public ClanChatOverlay(ChatOverlayPlugin plugin, ChatOverlayConfig config,
+    public ClanChatOverlay(Client client, ChatOverlayPlugin plugin, ChatOverlayConfig config,
                            BubbleRenderer renderer, ChatColorResolver colorResolver) {
+        this.client = client;
         this.plugin = plugin;
         this.config = config;
         this.renderer = renderer;
@@ -110,7 +113,7 @@ public class ClanChatOverlay extends Overlay {
                 iconOffsetX = iconW + 4;
             }
 
-            ChatLineBuilder builder = new ChatLineBuilder(msgColor, colorResolver.getChatColorConfig());
+            ChatLineBuilder builder = new ChatLineBuilder(client, msgColor, colorResolver.getChatColorConfig());
             String channelName = line.getChannelName();
             if (channelName != null && !channelName.isEmpty()) {
                 builder.append("[" + channelName + "] ", colorResolver.getChannelNameColor(line.getChatMessageType()));
@@ -131,13 +134,13 @@ public class ClanChatOverlay extends Overlay {
             int bubbleHeight;
 
             if (config.publicWordWrap()) {
-                List<int[]> lineRanges = renderer.wrapText(plain, fm, innerWidth);
+                List<int[]> lineRanges = renderer.wrapText(faded, fm, innerWidth);
                 if (lineRanges.isEmpty()) {
                     continue;
                 }
                 int maxLineW = 0;
                 for (int[] range : lineRanges) {
-                    maxLineW = Math.max(maxLineW, fm.stringWidth(plain.substring(range[0], range[1])));
+                    maxLineW = Math.max(maxLineW, renderer.getSlicedSegmentsWidth(faded, range[0], range[1], fm));
                 }
                 bubbleWidth = maxLineW + timestampWidth + iconOffsetX + paddingX * 2;
                 bubbleHeight = fm.getHeight() * lineRanges.size() + paddingY * 2;
@@ -163,7 +166,7 @@ public class ClanChatOverlay extends Overlay {
                 boolean isFirst = true;
                 for (int[] range : lineRanges) {
                     List<ColorSegment> lineSegs = renderer.sliceSegments(faded, range[0], range[1]);
-                    int lineW = fm.stringWidth(plain.substring(range[0], range[1]));
+                    int lineW = renderer.getSlicedSegmentsWidth(faded, range[0], range[1], fm);
 
                     if (isFirst && icon != null) {
                         String chanText = (channelName != null && !channelName.isEmpty()) ? "[" + channelName + "] " : "";
@@ -184,7 +187,7 @@ public class ClanChatOverlay extends Overlay {
                             drawIcon(graphics, fm, icon, startX + chanW, bubbleY, paddingY, alpha);
 
                             int contentStartX = startX + chanW + iconOffsetX;
-                            int contentW = fm.stringWidth(plain.substring(chanLen, range[1]));
+                            int contentW = renderer.getSlicedSegmentsWidth(faded, chanLen, range[1], fm);
                             renderer.renderSegments(graphics, senderSegs, contentStartX, textY, fm, contentStartX + contentW);
                         }
                         isFirst = false;
@@ -194,7 +197,7 @@ public class ClanChatOverlay extends Overlay {
                     textY += fm.getHeight();
                 }
             } else {
-                int textWidth = Math.min(fm.stringWidth(plain), innerWidth);
+                int textWidth = Math.min(renderer.getSegmentsWidth(faded, fm), innerWidth);
                 bubbleWidth = textWidth + timestampWidth + iconOffsetX + paddingX * 2;
                 bubbleHeight = fm.getHeight() + paddingY * 2;
 

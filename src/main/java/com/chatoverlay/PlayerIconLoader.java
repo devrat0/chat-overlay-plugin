@@ -79,7 +79,7 @@ public class PlayerIconLoader
 
 	// ── Private helpers ───────────────────────────────────────────────────────
 
-	private static BufferedImage toBufferedImage(IndexedSprite sprite)
+	public static BufferedImage toBufferedImage(IndexedSprite sprite)
 	{
 		int w     = sprite.getWidth();
 		int h     = sprite.getHeight();
