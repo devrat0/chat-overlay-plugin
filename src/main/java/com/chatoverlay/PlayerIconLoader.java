@@ -1,81 +1,14 @@
 package com.chatoverlay;
 
 import java.awt.image.BufferedImage;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import net.runelite.api.Client;
 import net.runelite.api.IndexedSprite;
 
 /**
- * Loads icons from {@code <img=N>} tags embedded in sender names
- * and attaches the resulting {@link BufferedImage} to the {@link ChatLine}.
- *
- * <p>Must be called on the client thread (inside an event handler).</p>
+ * Utility class to convert client IndexedSprites to BufferedImages.
  */
-@Singleton
 public class PlayerIconLoader
 {
-	private static final Pattern IMG_TAG = Pattern.compile("<img=(\\d+)>");
-
-	private final Client            client;
-	private final ChatOverlayConfig config;
-
-	@Inject
-	public PlayerIconLoader(Client client, ChatOverlayConfig config)
-	{
-		this.client = client;
-		this.config = config;
-	}
-
-	/**
-	 * Extracts the first {@code <img=N>} image ID from a raw sender name,
-	 * or returns -1 if absent.
-	 */
-	public int extractIconId(String rawSender)
-	{
-		if (rawSender == null)
-		{
-			return -1;
-		}
-		Matcher m = IMG_TAG.matcher(rawSender);
-		if (m.find())
-		{
-			try
-			{
-				return Integer.parseInt(m.group(1));
-			}
-			catch (NumberFormatException e)
-			{
-				return -1;
-			}
-		}
-		return -1;
-	}
-
-	/**
-	 * Resolves the icon for the given {@code iconId} and attaches it to {@code line}.
-	 * No-op when icons are disabled in config or the id is invalid.
-	 */
-	public void resolveAndSetIcon(ChatLine line, int iconId)
-	{
-		if (iconId < 0 || !config.showPlayerIcons())
-		{
-			return;
-		}
-		IndexedSprite[] modIcons = client.getModIcons();
-		if (modIcons == null || iconId >= modIcons.length)
-		{
-			return;
-		}
-		IndexedSprite sprite = modIcons[iconId];
-		if (sprite == null)
-		{
-			return;
-		}
-		line.setIcon(toBufferedImage(sprite));
-	}
+	private PlayerIconLoader() {}
 
 	// ── Private helpers ───────────────────────────────────────────────────────
 

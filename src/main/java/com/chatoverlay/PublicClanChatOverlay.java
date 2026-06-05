@@ -8,7 +8,6 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
-import java.awt.image.BufferedImage;
 import java.time.Instant;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -188,15 +187,6 @@ public class PublicClanChatOverlay extends Overlay
 				timestampWidth = fm.stringWidth(timestampStr);
 			}
 
-			BufferedImage icon    = config.showPlayerIcons() ? line.getIcon() : null;
-			int           iconOffsetX = 0;
-			if (icon != null)
-			{
-				int iconH = fm.getHeight();
-				int iconW = (int) ((double) icon.getWidth() * iconH / icon.getHeight());
-				iconOffsetX = iconW + 4;
-			}
-
 			ChatLineBuilder builder     = new ChatLineBuilder(client, msgColor, colorResolver.getChatColorConfig());
 			String          channelName = line.getChannelName();
 			if (channelName != null && !channelName.isEmpty())
@@ -205,16 +195,15 @@ public class PublicClanChatOverlay extends Overlay
 			}
 			if (!line.getSender().isEmpty())
 			{
-				builder.append(line.getRawSender(), senderColor);
+				String senderName = config.showPlayerIcons() ? line.getRawSender() : line.getSender();
+				builder.append(senderName, senderColor);
 				builder.append(": ");
 			}
 			builder.append(line.getRawMessage());
 
 			List<ColorSegment> allSegs    = builder.getSegments();
-			String             plain      = builder.toPlainString();
-			int                innerWidth = maxWidth - paddingX * 2 - timestampWidth - iconOffsetX;
+			int                innerWidth = maxWidth - paddingX * 2 - timestampWidth;
 			List<ColorSegment> faded      = renderer.applyAlphaToSegments(allSegs, alpha);
-			int                textStartX = paddingX + timestampWidth + iconOffsetX;
 
 			int bubbleWidth;
 			int bubbleHeight;
@@ -231,7 +220,7 @@ public class PublicClanChatOverlay extends Overlay
 				{
 					maxLineW = Math.max(maxLineW, renderer.getSlicedSegmentsWidth(faded, range[0], range[1], fm));
 				}
-				bubbleWidth  = maxLineW + timestampWidth + iconOffsetX + paddingX * 2;
+				bubbleWidth  = maxLineW + timestampWidth + paddingX * 2;
 				bubbleHeight = fm.getHeight() * lineRanges.size() + paddingY * 2;
 
 				int bubbleY;
@@ -253,53 +242,18 @@ public class PublicClanChatOverlay extends Overlay
 				drawTimestamp(graphics, timestampStr, paddingX, textY, senderColor, alpha);
 
 				int startX = paddingX + timestampWidth;
-				boolean isFirst = true;
 				for (int[] range : lineRanges)
 				{
 					List<ColorSegment> lineSegs = renderer.sliceSegments(faded, range[0], range[1]);
 					int lineW = renderer.getSlicedSegmentsWidth(faded, range[0], range[1], fm);
-
-					if (isFirst && icon != null)
-					{
-						String chanText = (channelName != null && !channelName.isEmpty()) ? "[" + channelName + "] " : "";
-						int chanLen = chanText.length();
-						int relativeSplit = chanLen - range[0];
-
-						if (relativeSplit <= 0)
-						{
-							drawIcon(graphics, fm, icon, startX, bubbleY, paddingY, alpha);
-							renderer.renderSegments(graphics, lineSegs, startX + iconOffsetX, textY, fm, startX + iconOffsetX + lineW);
-						}
-						else if (relativeSplit >= range[1] - range[0])
-						{
-							renderer.renderSegments(graphics, lineSegs, startX, textY, fm, startX + lineW);
-						}
-						else
-						{
-							List<ColorSegment> chanSegs = renderer.sliceSegments(faded, range[0], chanLen);
-							List<ColorSegment> senderSegs = renderer.sliceSegments(faded, chanLen, range[1]);
-
-							int chanW = fm.stringWidth(chanText);
-							renderer.renderSegments(graphics, chanSegs, startX, textY, fm, startX + chanW);
-							drawIcon(graphics, fm, icon, startX + chanW, bubbleY, paddingY, alpha);
-
-							int contentStartX = startX + chanW + iconOffsetX;
-							int contentW = renderer.getSlicedSegmentsWidth(faded, chanLen, range[1], fm);
-							renderer.renderSegments(graphics, senderSegs, contentStartX, textY, fm, contentStartX + contentW);
-						}
-						isFirst = false;
-					}
-					else
-					{
-						renderer.renderSegments(graphics, lineSegs, startX, textY, fm, startX + lineW);
-					}
+					renderer.renderSegments(graphics, lineSegs, startX, textY, fm, startX + lineW);
 					textY += fm.getHeight();
 				}
 			}
 			else
 			{
 				int textWidth = Math.min(renderer.getSegmentsWidth(faded, fm), innerWidth);
-				bubbleWidth  = textWidth + timestampWidth + iconOffsetX + paddingX * 2;
+				bubbleWidth  = textWidth + timestampWidth + paddingX * 2;
 				bubbleHeight = fm.getHeight() + paddingY * 2;
 
 				int bubbleY;
@@ -321,34 +275,7 @@ public class PublicClanChatOverlay extends Overlay
 				drawTimestamp(graphics, timestampStr, paddingX, textY, senderColor, alpha);
 
 				int startX = paddingX + timestampWidth;
-				if (icon != null)
-				{
-					String chanText = (channelName != null && !channelName.isEmpty()) ? "[" + channelName + "] " : "";
-					if (!chanText.isEmpty())
-					{
-						int chanLen = chanText.length();
-						int plainLen = plain.length();
-
-						List<ColorSegment> chanSegs = renderer.sliceSegments(faded, 0, chanLen);
-						List<ColorSegment> senderSegs = renderer.sliceSegments(faded, chanLen, plainLen);
-
-						int chanW = fm.stringWidth(chanText);
-						renderer.renderSegments(graphics, chanSegs, startX, textY, fm, startX + chanW);
-						drawIcon(graphics, fm, icon, startX + chanW, bubbleY, paddingY, alpha);
-
-						int contentStartX = startX + chanW + iconOffsetX;
-						renderer.renderSegments(graphics, senderSegs, contentStartX, textY, fm, contentStartX + textWidth - chanW);
-					}
-					else
-					{
-						drawIcon(graphics, fm, icon, startX, bubbleY, paddingY, alpha);
-						renderer.renderSegments(graphics, faded, startX + iconOffsetX, textY, fm, startX + iconOffsetX + textWidth);
-					}
-				}
-				else
-				{
-					renderer.renderSegments(graphics, faded, startX, textY, fm, startX + textWidth);
-				}
+				renderer.renderSegments(graphics, faded, startX, textY, fm, startX + textWidth);
 			}
 
 			totalWidth = Math.max(totalWidth, bubbleWidth);
@@ -383,7 +310,6 @@ public class PublicClanChatOverlay extends Overlay
 				typingBuilder.append(typedText);
 
 				List<ColorSegment> typingSegs  = typingBuilder.getSegments();
-				String             typingPlain  = typingBuilder.toPlainString();
 				int                innerWidth   = maxWidth - paddingX * 2;
 
 				int bubbleWidth;
@@ -462,19 +388,6 @@ public class PublicClanChatOverlay extends Overlay
 			graphics.drawString(timestampStr, x + 1, textY + 1);
 			graphics.setColor(tc);
 			graphics.drawString(timestampStr, x, textY);
-		}
-	}
-
-	private void drawIcon(Graphics2D graphics, FontMetrics fm, BufferedImage icon, int x, int bubbleY, int paddingY, float alpha)
-	{
-		if (icon != null)
-		{
-			int iconH = fm.getHeight();
-			int iconW = (int) ((double) icon.getWidth() * iconH / icon.getHeight());
-			Composite orig = graphics.getComposite();
-			graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-			graphics.drawImage(icon, x, bubbleY + paddingY, iconW, iconH, null);
-			graphics.setComposite(orig);
 		}
 	}
 }

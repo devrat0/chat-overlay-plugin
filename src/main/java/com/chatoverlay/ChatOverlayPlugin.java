@@ -42,7 +42,6 @@ public class ChatOverlayPlugin extends Plugin
 	@Inject private GameOverlay           systemAlertOverlay;
 	@Inject private ClanChatOverlay       clanChatOverlay;
 	@Inject private ChatColorResolver     colorResolver;
-	@Inject private PlayerIconLoader      iconLoader;
 	@Inject private ChannelNameResolver   channelNames;
 
 	private final ChatMessageManager messageManager = new ChatMessageManager();
@@ -231,7 +230,6 @@ public class ChatOverlayPlugin extends Plugin
 			return;
 		}
 		ChatLine line = new ChatLine(messageNode, sender, rawSenderName, rawMsg, ChatCategory.PUBLIC, type);
-		iconLoader.resolveAndSetIcon(line, iconLoader.extractIconId(rawSenderName));
 		messageManager.addPublicClanMessage(line, config.publicMaxMessages());
 	}
 
@@ -253,7 +251,6 @@ public class ChatOverlayPlugin extends Plugin
 				break;
 		}
 		ChatLine line = new ChatLine(messageNode, sender, rawSenderName, rawMsg, ChatCategory.CLAN, type, channelName);
-		iconLoader.resolveAndSetIcon(line, iconLoader.extractIconId(rawSenderName));
 		if (config.showClanChat())
 		{
 			messageManager.addPublicClanMessage(line, config.publicMaxMessages());
@@ -288,7 +285,6 @@ public class ChatOverlayPlugin extends Plugin
 		}
 		ChatLine line = new ChatLine(messageNode, sender, rawSenderName, rawMsg,
 			ChatCategory.FRIENDS_CHAT, ChatMessageType.FRIENDSCHAT, channelNames.getFriendsChatName());
-		iconLoader.resolveAndSetIcon(line, iconLoader.extractIconId(rawSenderName));
 		if (config.showFriendsChat())
 		{
 			messageManager.addPublicClanMessage(line, config.publicMaxMessages());
@@ -304,10 +300,6 @@ public class ChatOverlayPlugin extends Plugin
 		boolean incoming = type != ChatMessageType.PRIVATECHATOUT;
 		String prefix    = incoming ? "From " : "To ";
 		ChatLine line    = new ChatLine(messageNode, prefix + sender, prefix + rawSenderName, rawMsg, ChatCategory.PRIVATE, type);
-		if (incoming)
-		{
-			iconLoader.resolveAndSetIcon(line, iconLoader.extractIconId(rawSenderName));
-		}
 		if (config.showPrivateChat())
 		{
 			messageManager.addPrivateMessage(line, config.privateMaxMessages());
