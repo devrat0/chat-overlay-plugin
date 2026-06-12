@@ -66,27 +66,7 @@ public class ChatLine
 		this(messageNode, sender, rawSender, rawMessage, category, chatMessageType, null);
 	}
 
-	public ChatLine(
-		String sender,
-		String rawSender,
-		String rawMessage,
-		ChatCategory category,
-		ChatMessageType chatMessageType,
-		String channelName)
-	{
-		this(null, sender, rawSender, rawMessage, category, chatMessageType, channelName);
-	}
 
-	/** Convenience constructor for messages that don't belong to a named channel. */
-	public ChatLine(
-		String sender,
-		String rawSender,
-		String rawMessage,
-		ChatCategory category,
-		ChatMessageType chatMessageType)
-	{
-		this(null, sender, rawSender, rawMessage, category, chatMessageType, null);
-	}
 
 	public String getSender()
 	{

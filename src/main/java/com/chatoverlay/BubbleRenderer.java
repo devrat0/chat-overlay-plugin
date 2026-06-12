@@ -7,6 +7,7 @@ import java.awt.Composite;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
@@ -35,6 +36,24 @@ public class BubbleRenderer
 
 	// ── Font ────────────────────────────────────────────────────────────────
 
+	public int getSnappedFontSize()
+	{
+		FontType type = config.fontType();
+		boolean isRuneScape = type == FontType.RUNESCAPE
+			|| type == FontType.RUNESCAPE_SMALL
+			|| type == FontType.RUNESCAPE_BOLD;
+
+		int currentSize = config.fontSize();
+		if (isRuneScape)
+		{
+			Font nativeFont = resolveNativeFont();
+			int nativeSize = nativeFont.getSize();
+			int scale = Math.max(1, Math.round((float) currentSize / nativeSize));
+			return nativeSize * scale;
+		}
+		return currentSize;
+	}
+
 	public Font resolveFont()
 	{
 		Font base;
@@ -42,9 +61,35 @@ public class BubbleRenderer
 		{
 			case RUNESCAPE:       base = FontManager.getRunescapeFont();      break;
 			case RUNESCAPE_SMALL: base = FontManager.getRunescapeSmallFont(); break;
+			case RUNESCAPE_BOLD:  base = FontManager.getRunescapeBoldFont();  break;
+			case ARIAL:           base = new Font("Arial", Font.PLAIN, config.fontSize()); break;
+			case DIALOG:          base = new Font(Font.DIALOG, Font.PLAIN, config.fontSize()); break;
+			case SANS_SERIF:      base = new Font(Font.SANS_SERIF, Font.PLAIN, config.fontSize()); break;
+			case SERIF:           base = new Font(Font.SERIF, Font.PLAIN, config.fontSize()); break;
+			case MONOSPACED:      base = new Font(Font.MONOSPACED, Font.PLAIN, config.fontSize()); break;
+			case CUSTOM:          base = new Font(config.customFontName(), Font.PLAIN, config.fontSize()); break;
 			default:              base = FontManager.getRunescapeBoldFont();  break;
 		}
-		return base.deriveFont((float) config.fontSize());
+		return base.deriveFont((float) getSnappedFontSize());
+	}
+
+	public void configureRenderingHints(Graphics2D graphics)
+	{
+		FontType type = config.fontType();
+		boolean isRuneScape = type == FontType.RUNESCAPE
+			|| type == FontType.RUNESCAPE_SMALL
+			|| type == FontType.RUNESCAPE_BOLD;
+
+		if (isRuneScape)
+		{
+			graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+			graphics.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
+		}
+		else
+		{
+			graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+			graphics.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+		}
 	}
 
 	// ── Alpha ────────────────────────────────────────────────────────────────
@@ -175,7 +220,77 @@ public class BubbleRenderer
 	 *
 	 * @return x position after the last drawn character
 	 */
+	public Font resolveNativeFont()
+	{
+		switch (config.fontType())
+		{
+			case RUNESCAPE:       return FontManager.getRunescapeFont();
+			case RUNESCAPE_SMALL: return FontManager.getRunescapeSmallFont();
+			default:              return FontManager.getRunescapeBoldFont();
+		}
+	}
+
 	public int renderSegments(Graphics2D graphics,
+		List<ColorSegment> segments,
+		int x, int y,
+		FontMetrics fm,
+		int maxX)
+	{
+		FontType type = config.fontType();
+		boolean isRuneScape = type == FontType.RUNESCAPE
+			|| type == FontType.RUNESCAPE_SMALL
+			|| type == FontType.RUNESCAPE_BOLD;
+
+		if (isRuneScape)
+		{
+			Font nativeFont = resolveNativeFont();
+			int nativeSize = nativeFont.getSize();
+			int currentSize = getSnappedFontSize();
+
+			if (currentSize != nativeSize)
+			{
+				int scale = currentSize / nativeSize;
+				FontMetrics nativeFm = graphics.getFontMetrics(nativeFont);
+				int nativeW = getSegmentsWidth(segments, nativeFm);
+				int nativeH = nativeFm.getHeight();
+
+				if (nativeW <= 0 || nativeH <= 0)
+				{
+					return x;
+				}
+
+				java.awt.image.BufferedImage img = new java.awt.image.BufferedImage(
+					nativeW + 2, nativeH + 2, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+				Graphics2D g2d = img.createGraphics();
+				g2d.setFont(nativeFont);
+				g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+				g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
+
+				// Render onto the image
+				renderSegmentsDirectly(g2d, segments, 0, nativeFm.getAscent(), nativeFm, nativeW + 2);
+				g2d.dispose();
+
+				// Scale and draw to main graphics context using integer factors
+				int scaledW = (nativeW + 2) * scale;
+				int scaledH = (nativeH + 2) * scale;
+				int topY = y - nativeFm.getAscent() * scale;
+
+				Object oldInterpolation = graphics.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+				graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+				graphics.drawImage(img, x, topY, scaledW, scaledH, null);
+				if (oldInterpolation != null)
+				{
+					graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, oldInterpolation);
+				}
+
+				return x + scaledW;
+			}
+		}
+
+		return renderSegmentsDirectly(graphics, segments, x, y, fm, maxX);
+	}
+
+	private int renderSegmentsDirectly(Graphics2D graphics,
 		List<ColorSegment> segments,
 		int x, int y,
 		FontMetrics fm,

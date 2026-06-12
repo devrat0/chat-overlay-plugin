@@ -68,8 +68,7 @@ public class PublicClanChatOverlay extends Overlay
 			messages = messages.subList(messages.size() - maxMsg, messages.size());
 		}
 
-		graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-			RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+		renderer.configureRenderingHints(graphics);
 
 		Font font = renderer.resolveFont();
 		graphics.setFont(font);

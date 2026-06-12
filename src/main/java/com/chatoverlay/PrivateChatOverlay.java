@@ -42,7 +42,7 @@ public class PrivateChatOverlay extends Overlay
 		this.renderer      = renderer;
 		this.colorResolver = colorResolver;
 
-		setPosition(OverlayPosition.ABOVE_CHATBOX_RIGHT);
+		setPosition(OverlayPosition.TOP_LEFT);
 		setLayer(OverlayLayer.ABOVE_WIDGETS);
 		setPriority(Overlay.PRIORITY_MED);
 		setMovable(true);
@@ -73,8 +73,7 @@ public class PrivateChatOverlay extends Overlay
 			messages = messages.subList(messages.size() - maxMsg, messages.size());
 		}
 
-		graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-			RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+		renderer.configureRenderingHints(graphics);
 
 		Font font = renderer.resolveFont();
 		graphics.setFont(font);

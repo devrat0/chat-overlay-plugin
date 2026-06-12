@@ -39,9 +39,9 @@ public class ClanChatOverlay extends Overlay {
         this.renderer = renderer;
         this.colorResolver = colorResolver;
 
-        setPosition(OverlayPosition.BOTTOM_LEFT);
+        setPosition(OverlayPosition.TOP_LEFT);
         setLayer(OverlayLayer.ABOVE_WIDGETS);
-        setPriority(Overlay.PRIORITY_LOW);
+        setPriority(Overlay.PRIORITY_LOW - 0.05f);
         setMovable(true);
         setSnappable(true);
     }
@@ -51,14 +51,16 @@ public class ClanChatOverlay extends Overlay {
         if (!config.showClanChatOverlay()) {
             return null;
         }
+        if (config.clanHideWhenChatboxOpen() && plugin.isChatboxOpen()) {
+            return null;
+        }
 
         List<ChatLine> messages = plugin.getMessageManager().getClanMessages();
         if (messages.isEmpty()) {
             return null;
         }
 
-        graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-                RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+        renderer.configureRenderingHints(graphics);
 
         Font font = renderer.resolveFont();
         graphics.setFont(font);

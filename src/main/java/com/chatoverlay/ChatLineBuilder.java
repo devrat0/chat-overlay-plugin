@@ -33,16 +33,6 @@ public class ChatLineBuilder
 	private final ChatColorConfig chatColorConfig;
 	private final Client client;
 
-	public ChatLineBuilder(Color baseColor)
-	{
-		this(null, baseColor, null);
-	}
-
-	public ChatLineBuilder(Color baseColor, ChatColorConfig chatColorConfig)
-	{
-		this(null, baseColor, chatColorConfig);
-	}
-
 	public ChatLineBuilder(Client client, Color baseColor, ChatColorConfig chatColorConfig)
 	{
 		this.client = client;
@@ -154,12 +144,6 @@ public class ChatLineBuilder
 		}
 	}
 
-	/** Returns the total character count of the plain text in the line. */
-	public int length()
-	{
-		return segments.stream().mapToInt(s -> s.getText().length()).sum();
-	}
-
 	/** Returns the plain text of the line by concatenating all segments. */
 	public String toPlainString()
 	{
@@ -169,12 +153,6 @@ public class ChatLineBuilder
 			sb.append(segment.getText());
 		}
 		return sb.toString();
-	}
-
-	/** Resets the builder to an empty line. */
-	public void clear()
-	{
-		segments.clear();
 	}
 
 	private static Color hexToColor(String hex, Color fallback)

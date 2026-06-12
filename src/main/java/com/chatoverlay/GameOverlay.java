@@ -88,8 +88,7 @@ public class GameOverlay extends Overlay
 			}
 		}
 
-		graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-			RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+		renderer.configureRenderingHints(graphics);
 		Font font = renderer.resolveFont();
 		graphics.setFont(font);
 		FontMetrics fm = graphics.getFontMetrics(font);
