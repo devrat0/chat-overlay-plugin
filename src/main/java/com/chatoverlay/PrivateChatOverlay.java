@@ -161,9 +161,17 @@ public class PrivateChatOverlay extends Overlay
 					bubbleY = y;
 				}
 
-				renderer.drawBubble(graphics, 0, bubbleY, bubbleWidth, bubbleHeight, config.privateBgColor(), alpha);
+				boolean isHighlighted = !config.privateDisableKeywordHighlight() && plugin.shouldHighlight(line);
+				Color bgColor = isHighlighted ? config.highlightBgColor() : config.privateBgColor();
+				Color borderColor = isHighlighted ? config.highlightBorderColor() : config.privateBubbleBorderColor();
+				boolean showBorder = isHighlighted ? config.highlightShowBorder() : config.privateShowBubbleBorder();
+
+				if (isHighlighted || config.privateBgEnabled())
+				{
+					renderer.drawBubble(graphics, 0, bubbleY, bubbleWidth, bubbleHeight, bgColor, alpha);
+				}
 				renderer.drawBubbleBorder(graphics, 0, bubbleY, bubbleWidth, bubbleHeight,
-					config.privateBubbleBorderColor(), config.privateShowBubbleBorder(), plugin.isPeekActive(), alpha);
+					borderColor, showBorder, plugin.isPeekActive(), alpha);
 
 				int textY = bubbleY + paddingY + fm.getAscent();
 				drawTimestamp(graphics, timestampStr, paddingX, textY, senderColor, alpha);
@@ -194,9 +202,17 @@ public class PrivateChatOverlay extends Overlay
 					bubbleY = y;
 				}
 
-				renderer.drawBubble(graphics, 0, bubbleY, bubbleWidth, bubbleHeight, config.privateBgColor(), alpha);
+				boolean isHighlighted = !config.privateDisableKeywordHighlight() && plugin.shouldHighlight(line);
+				Color bgColor = isHighlighted ? config.highlightBgColor() : config.privateBgColor();
+				Color borderColor = isHighlighted ? config.highlightBorderColor() : config.privateBubbleBorderColor();
+				boolean showBorder = isHighlighted ? config.highlightShowBorder() : config.privateShowBubbleBorder();
+
+				if (isHighlighted || config.privateBgEnabled())
+				{
+					renderer.drawBubble(graphics, 0, bubbleY, bubbleWidth, bubbleHeight, bgColor, alpha);
+				}
 				renderer.drawBubbleBorder(graphics, 0, bubbleY, bubbleWidth, bubbleHeight,
-					config.privateBubbleBorderColor(), config.privateShowBubbleBorder(), plugin.isPeekActive(), alpha);
+					borderColor, showBorder, plugin.isPeekActive(), alpha);
 
 				int textY = bubbleY + paddingY + fm.getAscent();
 				drawTimestamp(graphics, timestampStr, paddingX, textY, senderColor, alpha);

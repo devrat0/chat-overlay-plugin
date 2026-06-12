@@ -175,9 +175,14 @@ public class GameOverlay extends Overlay
 					currentY = bubbleY + bubbleHeight + bubbleSpacing;
 				}
 
-				renderer.drawBubble(graphics, bubbleX, bubbleY, bubbleWidth, bubbleHeight, config.systemBgColor(), alpha);
+				boolean isHighlighted = !config.systemDisableKeywordHighlight() && plugin.shouldHighlight(alert);
+				Color bgColor = isHighlighted ? config.highlightBgColor() : config.systemBgColor();
+				Color borderColor = isHighlighted ? config.highlightBorderColor() : config.systemBubbleBorderColor();
+				boolean showBorder = isHighlighted ? config.highlightShowBorder() : config.systemShowBubbleBorder();
+
+				renderer.drawBubble(graphics, bubbleX, bubbleY, bubbleWidth, bubbleHeight, bgColor, alpha);
 				renderer.drawBubbleBorder(graphics, bubbleX, bubbleY, bubbleWidth, bubbleHeight,
-					config.systemBubbleBorderColor(), config.systemShowBubbleBorder(), plugin.isPeekActive(), alpha);
+					borderColor, showBorder, plugin.isPeekActive(), alpha);
 
 				int textY = bubbleY + paddingY + fm.getAscent();
 				for (int[] range : lineRanges)
@@ -208,9 +213,14 @@ public class GameOverlay extends Overlay
 					currentY = bubbleY + bubbleHeight + bubbleSpacing;
 				}
 
-				renderer.drawBubble(graphics, bubbleX, bubbleY, bubbleWidth, bubbleHeight, config.systemBgColor(), alpha);
+				boolean isHighlighted = !config.systemDisableKeywordHighlight() && plugin.shouldHighlight(alert);
+				Color bgColor = isHighlighted ? config.highlightBgColor() : config.systemBgColor();
+				Color borderColor = isHighlighted ? config.highlightBorderColor() : config.systemBubbleBorderColor();
+				boolean showBorder = isHighlighted ? config.highlightShowBorder() : config.systemShowBubbleBorder();
+
+				renderer.drawBubble(graphics, bubbleX, bubbleY, bubbleWidth, bubbleHeight, bgColor, alpha);
 				renderer.drawBubbleBorder(graphics, bubbleX, bubbleY, bubbleWidth, bubbleHeight,
-					config.systemBubbleBorderColor(), config.systemShowBubbleBorder(), plugin.isPeekActive(), alpha);
+					borderColor, showBorder, plugin.isPeekActive(), alpha);
 
 				int textY      = bubbleY + paddingY + fm.getAscent();
 				int textStartX = centerX - textWidth / 2;
@@ -274,9 +284,14 @@ public class GameOverlay extends Overlay
 				bubbleWidth  = maxLineW + paddingX * 2;
 				bubbleHeight = fm.getHeight() * lineRanges.size() + paddingY * 2;
 
-				renderer.drawBubble(graphics, 0, y, bubbleWidth, bubbleHeight, config.systemBgColor(), alpha);
+				boolean isHighlighted = !config.systemDisableKeywordHighlight() && plugin.shouldHighlight(alert);
+				Color bgColor = isHighlighted ? config.highlightBgColor() : config.systemBgColor();
+				Color borderColor = isHighlighted ? config.highlightBorderColor() : config.systemBubbleBorderColor();
+				boolean showBorder = isHighlighted ? config.highlightShowBorder() : config.systemShowBubbleBorder();
+
+				renderer.drawBubble(graphics, 0, y, bubbleWidth, bubbleHeight, bgColor, alpha);
 				renderer.drawBubbleBorder(graphics, 0, y, bubbleWidth, bubbleHeight,
-					config.systemBubbleBorderColor(), config.systemShowBubbleBorder(), plugin.isPeekActive(), alpha);
+					borderColor, showBorder, plugin.isPeekActive(), alpha);
 
 				int textY = y + paddingY + fm.getAscent();
 				for (int[] range : lineRanges)
@@ -293,9 +308,14 @@ public class GameOverlay extends Overlay
 				bubbleWidth  = textWidth + paddingX * 2;
 				bubbleHeight = fm.getHeight() + paddingY * 2;
 
-				renderer.drawBubble(graphics, 0, y, bubbleWidth, bubbleHeight, config.systemBgColor(), alpha);
+				boolean isHighlighted = !config.systemDisableKeywordHighlight() && plugin.shouldHighlight(alert);
+				Color bgColor = isHighlighted ? config.highlightBgColor() : config.systemBgColor();
+				Color borderColor = isHighlighted ? config.highlightBorderColor() : config.systemBubbleBorderColor();
+				boolean showBorder = isHighlighted ? config.highlightShowBorder() : config.systemShowBubbleBorder();
+
+				renderer.drawBubble(graphics, 0, y, bubbleWidth, bubbleHeight, bgColor, alpha);
 				renderer.drawBubbleBorder(graphics, 0, y, bubbleWidth, bubbleHeight,
-					config.systemBubbleBorderColor(), config.systemShowBubbleBorder(), plugin.isPeekActive(), alpha);
+					borderColor, showBorder, plugin.isPeekActive(), alpha);
 
 				int textY = y + paddingY + fm.getAscent();
 				renderer.renderSegments(graphics, faded, paddingX, textY, fm, paddingX + textWidth);

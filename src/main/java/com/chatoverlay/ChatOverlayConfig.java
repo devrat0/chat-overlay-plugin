@@ -26,9 +26,17 @@ public interface ChatOverlayConfig extends Config
 	String generalSection = "general";
 
 	@ConfigSection(
+		name = "Keyword Highlighting",
+		description = "Configure custom keyword and boss alert highlighting across all overlays",
+		position = 1,
+		closedByDefault = true
+	)
+	String highlightSection = "highlighting";
+
+	@ConfigSection(
 		name = "Main Chat",
 		description = "Settings for the main chat overlay (bottom-left)",
-		position = 1,
+		position = 2,
 		closedByDefault = true
 	)
 	String publicClanSection = "publicClan";
@@ -36,7 +44,7 @@ public interface ChatOverlayConfig extends Config
 	@ConfigSection(
 		name = "Private Chat",
 		description = "Settings for the private chat overlay (above public/clan)",
-		position = 2,
+		position = 3,
 		closedByDefault = true
 	)
 	String privateSection = "private";
@@ -44,7 +52,7 @@ public interface ChatOverlayConfig extends Config
 	@ConfigSection(
 		name = "Clan Chat",
 		description = "Settings for the dedicated clan chat overlay",
-		position = 3,
+		position = 4,
 		closedByDefault = true
 	)
 	String clanSection = "clan";
@@ -52,7 +60,7 @@ public interface ChatOverlayConfig extends Config
 	@ConfigSection(
 		name = "Game Chat",
 		description = "Settings for game/system message alerts",
-		position = 4,
+		position = 5,
 		closedByDefault = true
 	)
 	String systemSection = "system";
@@ -183,6 +191,108 @@ public interface ChatOverlayConfig extends Config
 	default boolean showPlayerIcons()
 	{
 		return true;
+	}
+
+	// ──────────────────────────────────────────────
+	//  KEYWORD HIGHLIGHTING
+	// ──────────────────────────────────────────────
+
+	@ConfigItem(
+		keyName = "highlightKeywords",
+		name = "Highlight Keywords",
+		description = "Enable custom visual highlights for specific keywords in all overlays",
+		position = 0,
+		section = "highlighting"
+	)
+	default boolean highlightKeywords()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "highlightKeywordsList",
+		name = "Highlight Words",
+		description = "Comma-separated list of keywords to highlight across all overlays. Case-insensitive.",
+		position = 1,
+		section = "highlighting"
+	)
+	default String highlightKeywordsList()
+	{
+		return "dd,pot up,spec";
+	}
+
+	@ConfigItem(
+		keyName = "highlightCoX",
+		name = "Highlight CoX Alerts",
+		description = "Highlight Chambers of Xeric (CoX) boss and special attack messages",
+		position = 2,
+		section = "highlighting"
+	)
+	default boolean highlightCoX()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "highlightToB",
+		name = "Highlight ToB Alerts",
+		description = "Highlight Theatre of Blood (ToB) boss and special attack messages",
+		position = 3,
+		section = "highlighting"
+	)
+	default boolean highlightToB()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "highlightToA",
+		name = "Highlight ToA Alerts",
+		description = "Highlight Tombs of Amascut (ToA) boss and special attack messages",
+		position = 4,
+		section = "highlighting"
+	)
+	default boolean highlightToA()
+	{
+		return true;
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "highlightBgColor",
+		name = "Highlight BG Color",
+		description = "Background color for highlighted chat bubbles",
+		position = 5,
+		section = "highlighting"
+	)
+	default Color highlightBgColor()
+	{
+		return new Color(80, 15, 15, 220);
+	}
+
+	@ConfigItem(
+		keyName = "highlightShowBorder",
+		name = "Highlight Border",
+		description = "Always show a border around highlighted chat bubbles",
+		position = 6,
+		section = "highlighting"
+	)
+	default boolean highlightShowBorder()
+	{
+		return true;
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "highlightBorderColor",
+		name = "Highlight Border Color",
+		description = "Border color for highlighted chat bubbles",
+		position = 7,
+		section = "highlighting"
+	)
+	default Color highlightBorderColor()
+	{
+		return new Color(220, 50, 50, 255);
 	}
 
 	// ──────────────────────────────────────────────
@@ -414,6 +524,18 @@ public interface ChatOverlayConfig extends Config
 		return 300;
 	}
 
+	@ConfigItem(
+		keyName = "publicDisableKeywordHighlight",
+		name = "Disable Keyword Highlight",
+		description = "Disable keyword and boss alert highlighting in the main chat overlay",
+		position = 18,
+		section = "publicClan"
+	)
+	default boolean publicDisableKeywordHighlight()
+	{
+		return false;
+	}
+
 	// ──────────────────────────────────────────────
 	//  PRIVATE CHAT  (above public/clan)
 	// ──────────────────────────────────────────────
@@ -592,6 +714,18 @@ public interface ChatOverlayConfig extends Config
 	default int privateOverlayHeight()
 	{
 		return 200;
+	}
+
+	@ConfigItem(
+		keyName = "privateDisableKeywordHighlight",
+		name = "Disable Keyword Highlight",
+		description = "Disable keyword and boss alert highlighting in the private chat overlay",
+		position = 14,
+		section = "private"
+	)
+	default boolean privateDisableKeywordHighlight()
+	{
+		return true;
 	}
 
 	// ──────────────────────────────────────────────
@@ -792,6 +926,18 @@ public interface ChatOverlayConfig extends Config
 		section = "clan"
 	)
 	default boolean clanShowTimestamp()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "clanDisableKeywordHighlight",
+		name = "Disable Keyword Highlight",
+		description = "Disable keyword and boss alert highlighting in the dedicated clan chat overlay",
+		position = 16,
+		section = "clan"
+	)
+	default boolean clanDisableKeywordHighlight()
 	{
 		return true;
 	}
@@ -1058,5 +1204,16 @@ public interface ChatOverlayConfig extends Config
 		return LayoutMode.BOTTOM_TO_TOP;
 	}
 
+	@ConfigItem(
+		keyName = "systemDisableKeywordHighlight",
+		name = "Disable Keyword Highlight",
+		description = "Disable keyword and boss alert highlighting in the game chat overlay",
+		position = 20,
+		section = "system"
+	)
+	default boolean systemDisableKeywordHighlight()
+	{
+		return false;
+	}
 }
 

@@ -49,6 +49,7 @@ public class ChatOverlayPlugin extends Plugin
 
 	private volatile boolean   peekActive   = false;
 	private HotkeyListener     peekListener;
+	private final java.util.List<java.util.regex.Pattern> compiledHighlightPatterns = new java.util.ArrayList<>();
 
 	// ── Queries used by overlays ──────────────────────────────────────────────
 
@@ -128,6 +129,9 @@ public class ChatOverlayPlugin extends Plugin
 		overlayManager.add(privateChatOverlay);
 		overlayManager.add(systemAlertOverlay);
 		overlayManager.add(clanChatOverlay);
+
+		rebuildHighlightPatterns();
+
 		log.info("Chat Overlay plugin started");
 	}
 
@@ -175,7 +179,10 @@ public class ChatOverlayPlugin extends Plugin
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
-		// reserved for future config-change reactions
+		if (event.getGroup().equals("chatoverlay") && event.getKey().equals("highlightKeywordsList"))
+		{
+			rebuildHighlightPatterns();
+		}
 	}
 
 	/**
@@ -225,20 +232,12 @@ public class ChatOverlayPlugin extends Plugin
 
 	private void handlePublicChat(net.runelite.api.MessageNode messageNode, ChatMessageType type, String sender, String rawSenderName, String rawMsg)
 	{
-		if (!config.showPublicChat())
-		{
-			return;
-		}
 		ChatLine line = new ChatLine(messageNode, sender, rawSenderName, rawMsg, ChatCategory.PUBLIC, type);
-		messageManager.addPublicClanMessage(line, config.publicMaxMessages());
+		messageManager.addPublicClanMessage(line, 100);
 	}
 
 	private void handleClanChat(net.runelite.api.MessageNode messageNode, ChatMessageType type, String sender, String rawSenderName, String rawMsg)
 	{
-		if (!config.showClanChat() && !config.showClanChatOverlay())
-		{
-			return;
-		}
 		String channelName;
 		switch (type)
 		{
@@ -251,48 +250,16 @@ public class ChatOverlayPlugin extends Plugin
 				break;
 		}
 		ChatLine line = new ChatLine(messageNode, sender, rawSenderName, rawMsg, ChatCategory.CLAN, type, channelName);
-		if (config.showClanChat())
-		{
-			messageManager.addPublicClanMessage(line, config.publicMaxMessages());
-		}
-		if (config.showClanChatOverlay())
-		{
-			boolean shouldAdd = false;
-			if (type == ChatMessageType.CLAN_GIM_CHAT)
-			{
-				shouldAdd = config.clanShowGim();
-			}
-			else if (type == ChatMessageType.CLAN_GUEST_CHAT || type == ChatMessageType.CLAN_GUEST_MESSAGE)
-			{
-				shouldAdd = config.clanShowGuest();
-			}
-			else
-			{
-				shouldAdd = config.clanShowClan();
-			}
-			if (shouldAdd)
-			{
-				messageManager.addClanMessage(line, config.clanMaxMessages());
-			}
-		}
+		messageManager.addPublicClanMessage(line, 100);
+		messageManager.addClanMessage(line, 100);
 	}
 
 	private void handleFriendsChat(net.runelite.api.MessageNode messageNode, String sender, String rawSenderName, String rawMsg)
 	{
-		if (!config.showFriendsChat() && !config.showClanChatOverlay())
-		{
-			return;
-		}
 		ChatLine line = new ChatLine(messageNode, sender, rawSenderName, rawMsg,
 			ChatCategory.FRIENDS_CHAT, ChatMessageType.FRIENDSCHAT, channelNames.getFriendsChatName());
-		if (config.showFriendsChat())
-		{
-			messageManager.addPublicClanMessage(line, config.publicMaxMessages());
-		}
-		if (config.showClanChatOverlay() && config.clanShowFriendsChat())
-		{
-			messageManager.addClanMessage(line, config.clanMaxMessages());
-		}
+		messageManager.addPublicClanMessage(line, 100);
+		messageManager.addClanMessage(line, 100);
 	}
 
 	private void handlePrivateChat(net.runelite.api.MessageNode messageNode, ChatMessageType type, String sender, String rawSenderName, String rawMsg)
@@ -300,14 +267,8 @@ public class ChatOverlayPlugin extends Plugin
 		boolean incoming = type != ChatMessageType.PRIVATECHATOUT;
 		String prefix    = incoming ? "From " : "To ";
 		ChatLine line    = new ChatLine(messageNode, prefix + sender, prefix + rawSenderName, rawMsg, ChatCategory.PRIVATE, type);
-		if (config.showPrivateChat())
-		{
-			messageManager.addPrivateMessage(line, config.privateMaxMessages());
-		}
-		if (config.showPrivateChatInMain())
-		{
-			messageManager.addPublicClanMessage(line, config.publicMaxMessages());
-		}
+		messageManager.addPrivateMessage(line, 100);
+		messageManager.addPublicClanMessage(line, 100);
 	}
 
 	private boolean isSystemMessageFiltered(String lower)
@@ -349,18 +310,8 @@ public class ChatOverlayPlugin extends Plugin
 			case BROADCAST:
 			{
 				ChatLine line = new ChatLine(messageNode, null, null, rawMsg, ChatCategory.SYSTEM, type);
-				if (config.showSystemAlerts())
-				{
-					messageManager.addSystemMessage(line, config.systemMaxAlerts(), false, 0L);
-				}
-				if (config.showGameMessagesInMain())
-				{
-					boolean blocked = isSystemMessageFiltered(lower);
-					if (!blocked)
-					{
-						messageManager.addPublicClanMessage(line, config.publicMaxMessages());
-					}
-				}
+				messageManager.addSystemMessage(line, 100, false, 0L);
+				messageManager.addPublicClanMessage(line, 100);
 				break;
 			}
 			case FRIENDSCHATNOTIFICATION:
@@ -368,26 +319,22 @@ public class ChatOverlayPlugin extends Plugin
 			case LOGINLOGOUTNOTIFICATION:
 			{
 				boolean blocked = isSystemMessageFiltered(lower);
-				if (!blocked && config.showSystemAlerts())
+				if (!blocked)
 				{
-					messageManager.addSystemMessage(
-						new ChatLine(messageNode, null, null, rawMsg, ChatCategory.SYSTEM, type),
-						config.systemMaxAlerts(), config.filterSpamAlerts(),
-						config.spamCooldownSeconds() * 1000L);
+					ChatLine line = new ChatLine(messageNode, null, null, rawMsg, ChatCategory.SYSTEM, type);
+					boolean added = messageManager.addSystemMessage(line, 100, config.filterSpamAlerts(), config.spamCooldownSeconds() * 1000L);
+					if (added)
+					{
+						messageManager.addPublicClanMessage(line, 100);
+					}
 				}
 				break;
 			}
 			case WELCOME:
 			{
 				ChatLine line = new ChatLine(messageNode, null, null, rawMsg, ChatCategory.SYSTEM, type);
-				if (config.showSystemAlerts())
-				{
-					messageManager.addSystemMessage(line, config.systemMaxAlerts(), false, 0L);
-				}
-				if (config.showGameMessagesInMain())
-				{
-					messageManager.addPublicClanMessage(line, config.publicMaxMessages());
-				}
+				messageManager.addSystemMessage(line, 100, false, 0L);
+				messageManager.addPublicClanMessage(line, 100);
 				break;
 			}
 			default:
@@ -399,14 +346,11 @@ public class ChatOverlayPlugin extends Plugin
 	private void addSystemLine(net.runelite.api.MessageNode messageNode, String rawMsg, ChatMessageType type, boolean useFilter)
 	{
 		ChatLine line = new ChatLine(messageNode, null, null, rawMsg, ChatCategory.SYSTEM, type);
-		if (config.showSystemAlerts())
+		boolean added = messageManager.addSystemMessage(line, 100,
+			useFilter && config.filterSpamAlerts(), config.spamCooldownSeconds() * 1000L);
+		if (added)
 		{
-			messageManager.addSystemMessage(line, config.systemMaxAlerts(),
-				useFilter && config.filterSpamAlerts(), config.spamCooldownSeconds() * 1000L);
-		}
-		if (config.showGameMessagesInMain())
-		{
-			messageManager.addPublicClanMessage(line, config.publicMaxMessages());
+			messageManager.addPublicClanMessage(line, 100);
 		}
 	}
 
@@ -421,5 +365,147 @@ public class ChatOverlayPlugin extends Plugin
 	ChatOverlayConfig provideConfig(ConfigManager configManager)
 	{
 		return configManager.getConfig(ChatOverlayConfig.class);
+	}
+
+	public boolean shouldHighlight(ChatLine line)
+	{
+		if (!config.highlightKeywords())
+		{
+			return false;
+		}
+
+		String text = line.getPlainMessage().toLowerCase();
+
+		// Check custom keywords
+		if (!compiledHighlightPatterns.isEmpty())
+		{
+			for (java.util.regex.Pattern pattern : compiledHighlightPatterns)
+			{
+				if (pattern.matcher(text).find())
+				{
+					return true;
+				}
+			}
+		}
+
+		// Check Chambers of Xeric alerts
+		if (config.highlightCoX())
+		{
+			for (String coxMsg : RaidAlertMessages.COX_MESSAGES)
+			{
+				if (text.contains(coxMsg))
+				{
+					return true;
+				}
+			}
+		}
+
+		// Check Theatre of Blood alerts
+		if (config.highlightToB())
+		{
+			for (String tobMsg : RaidAlertMessages.TOB_MESSAGES)
+			{
+				if (text.contains(tobMsg))
+				{
+					return true;
+				}
+			}
+		}
+
+		// Check Tombs of Amascut alerts
+		if (config.highlightToA())
+		{
+			for (String toaMsg : RaidAlertMessages.TOA_MESSAGES)
+			{
+				if (text.contains(toaMsg))
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	private void rebuildHighlightPatterns()
+	{
+		compiledHighlightPatterns.clear();
+		String customWords = config.highlightKeywordsList();
+		if (customWords == null || customWords.trim().isEmpty())
+		{
+			return;
+		}
+
+		for (String word : customWords.split(","))
+		{
+			String trimmed = word.trim().toLowerCase();
+			if (trimmed.isEmpty())
+			{
+				continue;
+			}
+			String regex = keywordToRegex(trimmed);
+			try
+			{
+				compiledHighlightPatterns.add(java.util.regex.Pattern.compile(regex));
+			}
+			catch (java.util.regex.PatternSyntaxException e)
+			{
+				log.warn("Failed to compile custom highlight keyword regex: " + regex, e);
+			}
+		}
+	}
+
+	private static String keywordToRegex(String keyword)
+	{
+		if (keyword == null || keyword.isEmpty())
+		{
+			return "";
+		}
+
+		StringBuilder sb = new StringBuilder();
+
+		// Check if it starts with word char and doesn't start with wildcard
+		boolean startsWithWordChar = false;
+		if (!keyword.startsWith("*"))
+		{
+			char first = keyword.charAt(0);
+			if (Character.isLetterOrDigit(first) || first == '_')
+			{
+				startsWithWordChar = true;
+			}
+		}
+
+		// Check if it ends with word char and doesn't end with wildcard
+		boolean endsWithWordChar = false;
+		if (!keyword.endsWith("*"))
+		{
+			char last = keyword.charAt(keyword.length() - 1);
+			if (Character.isLetterOrDigit(last) || last == '_')
+			{
+				endsWithWordChar = true;
+			}
+		}
+
+		if (startsWithWordChar)
+		{
+			sb.append("\\b");
+		}
+
+		String[] parts = keyword.split("\\*", -1);
+		for (int i = 0; i < parts.length; i++)
+		{
+			if (i > 0)
+			{
+				sb.append(".*");
+			}
+			sb.append(java.util.regex.Pattern.quote(parts[i]));
+		}
+
+		if (endsWithWordChar)
+		{
+			sb.append("\\b");
+		}
+
+		return sb.toString();
 	}
 }

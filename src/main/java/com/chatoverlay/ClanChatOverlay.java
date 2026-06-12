@@ -55,9 +55,34 @@ public class ClanChatOverlay extends Overlay {
             return null;
         }
 
-        List<ChatLine> messages = plugin.getMessageManager().getClanMessages();
+        List<ChatLine> allMessages = plugin.getMessageManager().getClanMessages();
+        List<ChatLine> messages = new java.util.ArrayList<>();
+        for (ChatLine line : allMessages) {
+            boolean keep = false;
+            if (line.getCategory() == ChatCategory.FRIENDS_CHAT) {
+                keep = config.clanShowFriendsChat();
+            } else if (line.getCategory() == ChatCategory.CLAN) {
+                net.runelite.api.ChatMessageType type = line.getChatMessageType();
+                if (type == net.runelite.api.ChatMessageType.CLAN_GIM_CHAT) {
+                    keep = config.clanShowGim();
+                } else if (type == net.runelite.api.ChatMessageType.CLAN_GUEST_CHAT || type == net.runelite.api.ChatMessageType.CLAN_GUEST_MESSAGE) {
+                    keep = config.clanShowGuest();
+                } else {
+                    keep = config.clanShowClan();
+                }
+            }
+            if (keep) {
+                messages.add(line);
+            }
+        }
+
         if (messages.isEmpty()) {
             return null;
+        }
+
+        int maxMsg = config.clanMaxMessages();
+        if (messages.size() > maxMsg) {
+            messages = messages.subList(messages.size() - maxMsg, messages.size());
         }
 
         renderer.configureRenderingHints(graphics);
@@ -145,11 +170,16 @@ public class ClanChatOverlay extends Overlay {
                     bubbleY = y;
                 }
 
-                if (config.clanBgEnabled()) {
-                    renderer.drawBubble(graphics, 0, bubbleY, bubbleWidth, bubbleHeight, config.clanBgColor(), alpha);
+                boolean isHighlighted = !config.clanDisableKeywordHighlight() && plugin.shouldHighlight(line);
+                Color bgColor = isHighlighted ? config.highlightBgColor() : config.clanBgColor();
+                Color borderColor = isHighlighted ? config.highlightBorderColor() : config.clanBubbleBorderColor();
+                boolean showBorder = isHighlighted ? config.highlightShowBorder() : config.clanShowBubbleBorder();
+
+                if (isHighlighted || config.clanBgEnabled()) {
+                    renderer.drawBubble(graphics, 0, bubbleY, bubbleWidth, bubbleHeight, bgColor, alpha);
                 }
                 renderer.drawBubbleBorder(graphics, 0, bubbleY, bubbleWidth, bubbleHeight,
-                        config.clanBubbleBorderColor(), config.clanShowBubbleBorder(), plugin.isPeekActive(), alpha);
+                        borderColor, showBorder, plugin.isPeekActive(), alpha);
 
                 int textY = bubbleY + paddingY + fm.getAscent();
                 drawTimestamp(graphics, timestampStr, paddingX, textY, senderColor, alpha);
@@ -174,11 +204,16 @@ public class ClanChatOverlay extends Overlay {
                     bubbleY = y;
                 }
 
-                if (config.clanBgEnabled()) {
-                    renderer.drawBubble(graphics, 0, bubbleY, bubbleWidth, bubbleHeight, config.clanBgColor(), alpha);
+                boolean isHighlighted = !config.clanDisableKeywordHighlight() && plugin.shouldHighlight(line);
+                Color bgColor = isHighlighted ? config.highlightBgColor() : config.clanBgColor();
+                Color borderColor = isHighlighted ? config.highlightBorderColor() : config.clanBubbleBorderColor();
+                boolean showBorder = isHighlighted ? config.highlightShowBorder() : config.clanShowBubbleBorder();
+
+                if (isHighlighted || config.clanBgEnabled()) {
+                    renderer.drawBubble(graphics, 0, bubbleY, bubbleWidth, bubbleHeight, bgColor, alpha);
                 }
                 renderer.drawBubbleBorder(graphics, 0, bubbleY, bubbleWidth, bubbleHeight,
-                        config.clanBubbleBorderColor(), config.clanShowBubbleBorder(), plugin.isPeekActive(), alpha);
+                        borderColor, showBorder, plugin.isPeekActive(), alpha);
 
                 int textY = bubbleY + paddingY + fm.getAscent();
                 drawTimestamp(graphics, timestampStr, paddingX, textY, senderColor, alpha);

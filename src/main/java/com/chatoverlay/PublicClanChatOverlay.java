@@ -56,7 +56,35 @@ public class PublicClanChatOverlay extends Overlay
 			return null;
 		}
 
-		List<ChatLine> messages = plugin.getMessageManager().getPublicClanMessages();
+		List<ChatLine> allMessages = plugin.getMessageManager().getPublicClanMessages();
+		List<ChatLine> messages = new java.util.ArrayList<>();
+		for (ChatLine line : allMessages)
+		{
+			boolean keep = false;
+			switch (line.getCategory())
+			{
+				case PUBLIC:
+					keep = config.showPublicChat();
+					break;
+				case CLAN:
+					keep = config.showClanChat();
+					break;
+				case FRIENDS_CHAT:
+					keep = config.showFriendsChat();
+					break;
+				case PRIVATE:
+					keep = config.showPrivateChatInMain();
+					break;
+				case SYSTEM:
+					keep = config.showGameMessagesInMain();
+					break;
+			}
+			if (keep)
+			{
+				messages.add(line);
+			}
+		}
+
 		if (messages.isEmpty())
 		{
 			return null;
@@ -233,9 +261,17 @@ public class PublicClanChatOverlay extends Overlay
 					bubbleY = y;
 				}
 
-				renderer.drawBubble(graphics, 0, bubbleY, bubbleWidth, bubbleHeight, config.publicBgColor(), alpha);
+				boolean isHighlighted = !config.publicDisableKeywordHighlight() && plugin.shouldHighlight(line);
+				Color bgColor = isHighlighted ? config.highlightBgColor() : config.publicBgColor();
+				Color borderColor = isHighlighted ? config.highlightBorderColor() : config.publicBubbleBorderColor();
+				boolean showBorder = isHighlighted ? config.highlightShowBorder() : config.publicShowBubbleBorder();
+
+				if (isHighlighted || config.publicBgEnabled())
+				{
+					renderer.drawBubble(graphics, 0, bubbleY, bubbleWidth, bubbleHeight, bgColor, alpha);
+				}
 				renderer.drawBubbleBorder(graphics, 0, bubbleY, bubbleWidth, bubbleHeight,
-					config.publicBubbleBorderColor(), config.publicShowBubbleBorder(), plugin.isPeekActive(), alpha);
+					borderColor, showBorder, plugin.isPeekActive(), alpha);
 
 				int textY = bubbleY + paddingY + fm.getAscent();
 				drawTimestamp(graphics, timestampStr, paddingX, textY, senderColor, alpha);
@@ -266,9 +302,17 @@ public class PublicClanChatOverlay extends Overlay
 					bubbleY = y;
 				}
 
-				renderer.drawBubble(graphics, 0, bubbleY, bubbleWidth, bubbleHeight, config.publicBgColor(), alpha);
+				boolean isHighlighted = !config.publicDisableKeywordHighlight() && plugin.shouldHighlight(line);
+				Color bgColor = isHighlighted ? config.highlightBgColor() : config.publicBgColor();
+				Color borderColor = isHighlighted ? config.highlightBorderColor() : config.publicBubbleBorderColor();
+				boolean showBorder = isHighlighted ? config.highlightShowBorder() : config.publicShowBubbleBorder();
+
+				if (isHighlighted || config.publicBgEnabled())
+				{
+					renderer.drawBubble(graphics, 0, bubbleY, bubbleWidth, bubbleHeight, bgColor, alpha);
+				}
 				renderer.drawBubbleBorder(graphics, 0, bubbleY, bubbleWidth, bubbleHeight,
-					config.publicBubbleBorderColor(), config.publicShowBubbleBorder(), plugin.isPeekActive(), alpha);
+					borderColor, showBorder, plugin.isPeekActive(), alpha);
 
 				int textY = bubbleY + paddingY + fm.getAscent();
 				drawTimestamp(graphics, timestampStr, paddingX, textY, senderColor, alpha);
