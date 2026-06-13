@@ -76,7 +76,7 @@ public class PublicClanChatOverlay extends Overlay
 					keep = config.showPrivateChatInMain();
 					break;
 				case SYSTEM:
-					keep = config.showGameMessagesInMain();
+					keep = config.showGameMessagesInMain() && !plugin.isSystemMessageFiltered(line.getPlainMessage().toLowerCase());
 					break;
 			}
 			if (keep)
