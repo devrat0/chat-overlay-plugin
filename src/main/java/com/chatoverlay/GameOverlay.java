@@ -62,10 +62,46 @@ public class GameOverlay extends Overlay
 			return null;
 		}
 
-		List<ChatLine> alerts = plugin.getMessageManager().getSystemMessages();
+		List<ChatLine> allAlerts = plugin.getMessageManager().getSystemMessages();
+		List<ChatLine> alerts = new java.util.ArrayList<>();
+		for (ChatLine alert : allAlerts)
+		{
+			if (!plugin.isSystemMessageFiltered(alert.getPlainMessage().toLowerCase()))
+			{
+				alerts.add(alert);
+			}
+		}
+
 		if (alerts.isEmpty())
 		{
 			return null;
+		}
+
+		int maxAlerts = config.systemMaxAlerts();
+		int activeCount = 0;
+		for (ChatLine alert : alerts)
+		{
+			if (!alert.isPruned())
+			{
+				activeCount++;
+			}
+		}
+
+		if (activeCount > maxAlerts)
+		{
+			int toPrune = activeCount - maxAlerts;
+			for (ChatLine alert : alerts)
+			{
+				if (!alert.isPruned())
+				{
+					alert.prune();
+					toPrune--;
+					if (toPrune == 0)
+					{
+						break;
+					}
+				}
+			}
 		}
 
 		GameOverlayMode mode = config.systemAlertMode();

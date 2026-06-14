@@ -271,13 +271,9 @@ public class ChatOverlayPlugin extends Plugin
 		messageManager.addPublicClanMessage(line, 100);
 	}
 
-	private boolean isSystemMessageFiltered(String lower)
+	public boolean isSystemMessageFiltered(String lower)
 	{
-		if (!config.filterSpamAlerts())
-		{
-			return false;
-		}
-		return filterMatcher.matches(config.spamPatterns(), lower)
+		return (config.filterSpamAlerts() && filterMatcher.matches(config.spamPatterns(), lower))
 			|| (config.filterInteractionSpam() && filterMatcher.matchesInteraction(lower))
 			|| (config.filterSkillingSpam() && filterMatcher.matchesSkilling(lower))
 			|| (config.filterCombatLootSpam() && filterMatcher.matchesCombatLoot(lower))
@@ -294,16 +290,12 @@ public class ChatOverlayPlugin extends Plugin
 			case ENGINE:
 			{
 				if (gameFilter == 2) return; // Off
-				boolean blocked = isSystemMessageFiltered(lower);
-				if (blocked) return;
 				addSystemLine(messageNode, rawMsg, type, true);
 				break;
 			}
 			case SPAM:
 			{
 				if (gameFilter != 0) return; // Filter or Off
-				boolean blocked = isSystemMessageFiltered(lower);
-				if (blocked) return;
 				addSystemLine(messageNode, rawMsg, type, true);
 				break;
 			}
@@ -318,15 +310,11 @@ public class ChatOverlayPlugin extends Plugin
 			case FRIENDNOTIFICATION:
 			case LOGINLOGOUTNOTIFICATION:
 			{
-				boolean blocked = isSystemMessageFiltered(lower);
-				if (!blocked)
+				ChatLine line = new ChatLine(messageNode, null, null, rawMsg, ChatCategory.SYSTEM, type);
+				boolean added = messageManager.addSystemMessage(line, 100, config.filterSpamAlerts(), config.spamCooldownSeconds() * 1000L);
+				if (added)
 				{
-					ChatLine line = new ChatLine(messageNode, null, null, rawMsg, ChatCategory.SYSTEM, type);
-					boolean added = messageManager.addSystemMessage(line, 100, config.filterSpamAlerts(), config.spamCooldownSeconds() * 1000L);
-					if (added)
-					{
-						messageManager.addPublicClanMessage(line, 100);
-					}
+					messageManager.addPublicClanMessage(line, 100);
 				}
 				break;
 			}
