@@ -85,7 +85,8 @@ public class PublicClanChatOverlay extends Overlay
 			}
 		}
 
-		if (messages.isEmpty())
+		boolean showTyping = config.showChatboxMessage() && !plugin.getChatboxTypedText().isEmpty();
+		if (messages.isEmpty() && !showTyping)
 		{
 			return null;
 		}
@@ -203,6 +204,11 @@ public class PublicClanChatOverlay extends Overlay
 			Color senderColor = colorResolver.getSenderColor(line.getChatMessageType(), ChatColorType.NORMAL, isSender);
 			Color msgColor    = colorResolver.getChatColor(line.getChatMessageType(), ChatColorType.HIGHLIGHT);
 
+			Color customTimestampColor = config.publicTimestampColor() != null ? config.publicTimestampColor() : senderColor;
+			Color customClanLabelColor = config.publicClanLabelColor() != null ? config.publicClanLabelColor() : colorResolver.getChannelNameColor(line.getChatMessageType());
+			Color customUsernameColor  = config.publicUsernameColor() != null ? config.publicUsernameColor() : senderColor;
+			Color customTextColor      = config.publicTextColor() != null ? config.publicTextColor() : msgColor;
+
 			// Timestamp rendered separately: [timestamp] [icon] username
 			String timestampStr   = "";
 			int    timestampWidth = 0;
@@ -210,20 +216,29 @@ public class PublicClanChatOverlay extends Overlay
 			{
 				LocalTime time = LocalTime.ofInstant(
 					Instant.ofEpochMilli(line.getTimestamp()), ZoneId.systemDefault());
-				timestampStr   = String.format("[%02d:%02d] ", time.getHour(), time.getMinute());
+				boolean showSeconds = config.timestampFormat() == TimestampFormat.HH_MM_SS;
+				String formatStr = showSeconds ? "[%02d:%02d:%02d] " : "[%02d:%02d] ";
+				if (showSeconds)
+				{
+					timestampStr = String.format(formatStr, time.getHour(), time.getMinute(), time.getSecond());
+				}
+				else
+				{
+					timestampStr = String.format(formatStr, time.getHour(), time.getMinute());
+				}
 				timestampWidth = fm.stringWidth(timestampStr);
 			}
 
-			ChatLineBuilder builder     = new ChatLineBuilder(client, msgColor, colorResolver.getChatColorConfig());
+			ChatLineBuilder builder     = new ChatLineBuilder(client, customTextColor, colorResolver.getChatColorConfig());
 			String          channelName = line.getChannelName();
 			if (channelName != null && !channelName.isEmpty())
 			{
-				builder.append("[" + channelName + "] ", colorResolver.getChannelNameColor(line.getChatMessageType()));
+				builder.append("[" + channelName + "] ", customClanLabelColor);
 			}
 			if (!line.getSender().isEmpty())
 			{
 				String senderName = config.showPlayerIcons() ? line.getRawSender() : line.getSender();
-				builder.append(senderName, senderColor);
+				builder.append(senderName, customUsernameColor);
 				builder.append(": ");
 			}
 			builder.append(line.getRawMessage());
@@ -274,7 +289,7 @@ public class PublicClanChatOverlay extends Overlay
 					borderColor, showBorder, plugin.isPeekActive(), alpha);
 
 				int textY = bubbleY + paddingY + fm.getAscent();
-				drawTimestamp(graphics, timestampStr, paddingX, textY, senderColor, alpha);
+				drawTimestamp(graphics, timestampStr, paddingX, textY, customTimestampColor, alpha);
 
 				int startX = paddingX + timestampWidth;
 				for (int[] range : lineRanges)
@@ -315,7 +330,7 @@ public class PublicClanChatOverlay extends Overlay
 					borderColor, showBorder, plugin.isPeekActive(), alpha);
 
 				int textY = bubbleY + paddingY + fm.getAscent();
-				drawTimestamp(graphics, timestampStr, paddingX, textY, senderColor, alpha);
+				drawTimestamp(graphics, timestampStr, paddingX, textY, customTimestampColor, alpha);
 
 				int startX = paddingX + timestampWidth;
 				renderer.renderSegments(graphics, faded, startX, textY, fm, startX + textWidth);
@@ -421,12 +436,12 @@ public class PublicClanChatOverlay extends Overlay
 
 	// ── Helpers ──────────────────────────────────────────────────────────────
 
-	private void drawTimestamp(Graphics2D graphics, String timestampStr, int x, int textY, Color senderColor, float alpha)
+	private void drawTimestamp(Graphics2D graphics, String timestampStr, int x, int textY, Color tsColor, float alpha)
 	{
 		if (!timestampStr.isEmpty())
 		{
-			Color tc = new Color(senderColor.getRed(), senderColor.getGreen(),
-				senderColor.getBlue(), (int) (senderColor.getAlpha() * alpha));
+			Color tc = new Color(tsColor.getRed(), tsColor.getGreen(),
+				tsColor.getBlue(), (int) (tsColor.getAlpha() * alpha));
 			graphics.setColor(new Color(0, 0, 0, tc.getAlpha()));
 			graphics.drawString(timestampStr, x + 1, textY + 1);
 			graphics.setColor(tc);

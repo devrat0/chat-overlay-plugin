@@ -390,12 +390,25 @@ public class GameOverlay extends Overlay
 	private AlertContent buildAlert(ChatLine alert, float alpha)
 	{
 		Color           msgColor = colorResolver.getChatColor(alert.getChatMessageType(), ChatColorType.HIGHLIGHT);
-		ChatLineBuilder builder  = new ChatLineBuilder(client, msgColor, colorResolver.getChatColorConfig());
+		Color           customTextColor = config.systemTextColor() != null ? config.systemTextColor() : msgColor;
+		ChatLineBuilder builder  = new ChatLineBuilder(client, customTextColor, colorResolver.getChatColorConfig());
 		if (config.systemShowTimestamp())
 		{
 			LocalTime time = LocalTime.ofInstant(
 				Instant.ofEpochMilli(alert.getTimestamp()), ZoneId.systemDefault());
-			builder.append(String.format("[%02d:%02d] ", time.getHour(), time.getMinute()), msgColor);
+			boolean showSeconds = config.timestampFormat() == TimestampFormat.HH_MM_SS;
+			String formatStr = showSeconds ? "[%02d:%02d:%02d] " : "[%02d:%02d] ";
+			String timestampStr;
+			if (showSeconds)
+			{
+				timestampStr = String.format(formatStr, time.getHour(), time.getMinute(), time.getSecond());
+			}
+			else
+			{
+				timestampStr = String.format(formatStr, time.getHour(), time.getMinute());
+			}
+			Color customTimestampColor = config.systemTimestampColor() != null ? config.systemTimestampColor() : msgColor;
+			builder.append(timestampStr, customTimestampColor);
 		}
 		builder.append(alert.getRawMessage());
 		return new AlertContent(
