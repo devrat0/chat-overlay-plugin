@@ -190,7 +190,8 @@ public class BubbleRenderer
 	{
 		graphics.setColor(new Color(bg.getRed(), bg.getGreen(), bg.getBlue(),
 			(int) (bg.getAlpha() * alpha)));
-		graphics.fillRoundRect(x, y, width, height, BORDER_RADIUS, BORDER_RADIUS);
+		int roundness = config.bubbleRoundness();
+		graphics.fillRoundRect(x, y, width, height, roundness, roundness);
 	}
 
 	/**
@@ -210,7 +211,8 @@ public class BubbleRenderer
 		graphics.setColor(new Color(bc.getRed(), bc.getGreen(), bc.getBlue(),
 			Math.min(255, (int) (bc.getAlpha() * alpha))));
 		graphics.setStroke(new BasicStroke(1f));
-		graphics.drawRoundRect(x, y, width - 1, height - 1, BORDER_RADIUS, BORDER_RADIUS);
+		int roundness = config.bubbleRoundness();
+		graphics.drawRoundRect(x, y, width - 1, height - 1, roundness, roundness);
 	}
 
 	// ── Text rendering ───────────────────────────────────────────────────────

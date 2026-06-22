@@ -109,10 +109,23 @@ public interface ChatOverlayConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "bubbleRoundness",
+		name = "Bubble Roundness",
+		description = "Corner radius (roundness) of the chat bubbles in pixels",
+		position = 3,
+		section = "general"
+	)
+	@Range(min = 0, max = 30)
+	default int bubbleRoundness()
+	{
+		return 12;
+	}
+
+	@ConfigItem(
 		keyName = "fontType",
 		name = "Font",
 		description = "Font used for all chat overlays",
-		position = 3,
+		position = 4,
 		section = "general"
 	)
 	default FontType fontType()
@@ -124,7 +137,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "customFontName",
 		name = "Font Name (if custom font is chosen in the dropdown above)",
 		description = "The name of the system font to use when 'Custom / System Font' is selected",
-		position = 4,
+		position = 5,
 		section = "general"
 	)
 	default String customFontName()
@@ -136,7 +149,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "fontSize",
 		name = "Font Size",
 		description = "Font size for all chat overlays. Note: RuneScape pixel fonts will automatically snap to the nearest integer scale (16, 32, 48px) to maintain pixel-perfect crispness, while system fonts scale continuously.",
-		position = 5,
+		position = 6,
 		section = "general"
 	)
 	@Range(min = 8, max = 48)
@@ -149,7 +162,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "showChatboxMessage",
 		name = "Show Chatbox Message",
 		description = "Display a bubble under the main chat overlay showing what you are currently typing",
-		position = 6,
+		position = 7,
 		section = "general"
 	)
 	default boolean showChatboxMessage()
@@ -161,7 +174,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "peekEnabled",
 		name = "Peek Mode",
 		description = "Hold the peek key to temporarily reveal all faded messages at full opacity",
-		position = 7,
+		position = 8,
 		section = "general"
 	)
 	default boolean peekEnabled()
@@ -173,7 +186,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "peekKey",
 		name = "Peek Key",
 		description = "Hold this key to peek at all chat messages at full opacity",
-		position = 8,
+		position = 9,
 		section = "general"
 	)
 	default Keybind peekKey()
@@ -185,12 +198,24 @@ public interface ChatOverlayConfig extends Config
 		keyName = "showPlayerIcons",
 		name = "Show Player Icons",
 		description = "Display Ironman and J-Mod crown icons next to sender names in chat bubbles",
-		position = 9,
+		position = 10,
 		section = "general"
 	)
 	default boolean showPlayerIcons()
 	{
 		return true;
+	}
+
+	@ConfigItem(
+		keyName = "timestampFormat",
+		name = "Timestamp Format",
+		description = "Format style for chat message timestamps",
+		position = 11,
+		section = "general"
+	)
+	default TimestampFormat timestampFormat()
+	{
+		return TimestampFormat.HH_MM;
 	}
 
 	// ──────────────────────────────────────────────
@@ -300,48 +325,10 @@ public interface ChatOverlayConfig extends Config
 	// ──────────────────────────────────────────────
 
 	@ConfigItem(
-		keyName = "publicHideWhenChatboxOpen",
-		name = "Hide When Chatbox Visible",
-		description = "Hide this overlay while the in-game chatbox is visible on screen",
-		position = 0,
-		section = "publicClan"
-	)
-	default boolean publicHideWhenChatboxOpen()
-	{
-		return true;
-	}
-
-	@ConfigItem(
-		keyName = "publicWordWrap",
-		name = "Word Wrap",
-		description = "When on, long messages wrap across multiple lines inside the bubble. "
-			+ "When off, messages are truncated to a single line with an ellipsis.",
-		position = 1,
-		section = "publicClan"
-	)
-	default boolean publicWordWrap()
-	{
-		return true;
-	}
-
-	@ConfigItem(
-		keyName = "publicFadeMessages",
-		name = "Enable Fading Messages",
-		description = "When on, messages gradually fade out before disappearing. "
-			+ "When off, messages stay fully visible until they expire.",
-		position = 2,
-		section = "publicClan"
-	)
-	default boolean publicFadeMessages()
-	{
-		return true;
-	}
-
-	@ConfigItem(
 		keyName = "showPublicChat",
 		name = "Show Public Chat",
 		description = "Display public chat messages",
-		position = 3,
+		position = 0,
 		section = "publicClan"
 	)
 	default boolean showPublicChat()
@@ -353,7 +340,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "showClanChat",
 		name = "Show Clan Chat",
 		description = "Display clan chat messages",
-		position = 4,
+		position = 1,
 		section = "publicClan"
 	)
 	default boolean showClanChat()
@@ -365,7 +352,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "showFriendsChat",
 		name = "Show Friends Chat",
 		description = "Display friends chat (FC) messages",
-		position = 5,
+		position = 2,
 		section = "publicClan"
 	)
 	default boolean showFriendsChat()
@@ -377,7 +364,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "showPrivateChatInMain",
 		name = "Show Private Chat",
 		description = "Include private messages in this overlay",
-		position = 6,
+		position = 3,
 		section = "publicClan"
 	)
 	default boolean showPrivateChatInMain()
@@ -390,7 +377,7 @@ public interface ChatOverlayConfig extends Config
 		name = "Show Game Chat",
 		description = "Also route game/system messages (GAMEMESSAGE, ENGINE, BROADCAST, WELCOME) into this main chat overlay. "
 			+ "Off by default — the dedicated Game Chat overlay already handles them.",
-		position = 7,
+		position = 4,
 		section = "publicClan"
 	)
 	default boolean showGameMessagesInMain()
@@ -399,10 +386,22 @@ public interface ChatOverlayConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "publicHideWhenChatboxOpen",
+		name = "Hide When Chatbox Visible",
+		description = "Hide this overlay while the in-game chatbox is visible on screen",
+		position = 5,
+		section = "publicClan"
+	)
+	default boolean publicHideWhenChatboxOpen()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "publicOverlayWidth",
 		name = "Overlay Width",
 		description = "Width of the public/clan chat overlay in pixels",
-		position = 8,
+		position = 6,
 		section = "publicClan"
 	)
 	@Range(min = 200, max = 800)
@@ -412,10 +411,99 @@ public interface ChatOverlayConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "publicOverlayHeight",
+		name = "Overlay Height",
+		description = "Height of the public/clan chat overlay in pixels (used in Bottom to Top mode)",
+		position = 7,
+		section = "publicClan"
+	)
+	@Range(min = 100, max = 800)
+	default int publicOverlayHeight()
+	{
+		return 300;
+	}
+
+	@ConfigItem(
+		keyName = "publicLayoutMode",
+		name = "Layout Mode",
+		description = "Stack messages from top to bottom or bottom to top",
+		position = 8,
+		section = "publicClan"
+	)
+	default LayoutMode publicLayoutMode()
+	{
+		return LayoutMode.BOTTOM_TO_TOP;
+	}
+
+	@ConfigItem(
+		keyName = "publicMaxMessages",
+		name = "Max Messages",
+		description = "Maximum number of public/clan messages shown in the overlay",
+		position = 9,
+		section = "publicClan"
+	)
+	@Range(min = 1, max = 50)
+	default int publicMaxMessages()
+	{
+		return 10;
+	}
+
+	@ConfigItem(
+		keyName = "publicWordWrap",
+		name = "Word Wrap",
+		description = "When on, long messages wrap across multiple lines inside the bubble. "
+			+ "When off, messages are truncated to a single line with an ellipsis.",
+		position = 10,
+		section = "publicClan"
+	)
+	default boolean publicWordWrap()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "publicMessageDuration",
+		name = "Message Duration (seconds)",
+		description = "How long each message stays fully visible before disappearing. Set to 0 to keep messages indefinitely.",
+		position = 11,
+		section = "publicClan"
+	)
+	@Range(min = 0, max = 300)
+	default int publicMessageDuration()
+	{
+		return 20;
+	}
+
+	@ConfigItem(
+		keyName = "publicFadeMessages",
+		name = "Enable Fading Messages",
+		description = "When on, messages gradually fade out before disappearing. "
+			+ "When off, messages stay fully visible until they expire.",
+		position = 12,
+		section = "publicClan"
+	)
+	default boolean publicFadeMessages()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "publicBgEnabled",
+		name = "Show Background",
+		description = "Toggle background on/off for a cleaner look",
+		position = 13,
+		section = "publicClan"
+	)
+	default boolean publicBgEnabled()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "publicBgColor",
 		name = "Background Color",
 		description = "Background color for the public/clan chat overlay",
-		position = 9,
+		position = 14,
 		section = "publicClan"
 	)
 	@Alpha
@@ -425,22 +513,10 @@ public interface ChatOverlayConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "publicBgEnabled",
-		name = "Show Background",
-		description = "Toggle background on/off for a cleaner look",
-		position = 10,
-		section = "publicClan"
-	)
-	default boolean publicBgEnabled()
-	{
-		return true;
-	}
-
-	@ConfigItem(
 		keyName = "publicShowBubbleBorder",
 		name = "Show Bubble Border",
 		description = "Draw a 1px rounded border around each chat bubble",
-		position = 11,
+		position = 15,
 		section = "publicClan"
 	)
 	default boolean publicShowBubbleBorder()
@@ -453,7 +529,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "publicBubbleBorderColor",
 		name = "Bubble Border Color",
 		description = "Color of the bubble border in the main chat overlay",
-		position = 12,
+		position = 16,
 		section = "publicClan"
 	)
 	default Color publicBubbleBorderColor()
@@ -462,66 +538,15 @@ public interface ChatOverlayConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "publicMessageDuration",
-		name = "Message Duration (seconds)",
-		description = "How long each message stays fully visible before disappearing. Set to 0 to keep messages indefinitely.",
-		position = 13,
-		section = "publicClan"
-	)
-	@Range(min = 0, max = 300)
-	default int publicMessageDuration()
-	{
-		return 20;
-	}
-
-	@ConfigItem(
-		keyName = "publicMaxMessages",
-		name = "Max Messages",
-		description = "Maximum number of public/clan messages shown in the overlay",
-		position = 14,
-		section = "publicClan"
-	)
-	@Range(min = 1, max = 50)
-	default int publicMaxMessages()
-	{
-		return 10;
-	}
-
-	@ConfigItem(
 		keyName = "publicShowTimestamp",
-		name = "Show Timestamp [HH:MM]",
+		name = "Show Timestamp",
 		description = "Prefix each message with its timestamp",
-		position = 15,
+		position = 17,
 		section = "publicClan"
 	)
 	default boolean publicShowTimestamp()
 	{
 		return true;
-	}
-
-	@ConfigItem(
-		keyName = "publicLayoutMode",
-		name = "Layout Mode",
-		description = "Stack messages from top to bottom or bottom to top",
-		position = 16,
-		section = "publicClan"
-	)
-	default LayoutMode publicLayoutMode()
-	{
-		return LayoutMode.BOTTOM_TO_TOP;
-	}
-
-	@ConfigItem(
-		keyName = "publicOverlayHeight",
-		name = "Overlay Height",
-		description = "Height of the public/clan chat overlay in pixels (used in Bottom to Top mode)",
-		position = 17,
-		section = "publicClan"
-	)
-	@Range(min = 100, max = 800)
-	default int publicOverlayHeight()
-	{
-		return 300;
 	}
 
 	@ConfigItem(
@@ -536,53 +561,67 @@ public interface ChatOverlayConfig extends Config
 		return false;
 	}
 
+	@Alpha
+	@ConfigItem(
+		keyName = "publicTimestampColor",
+		name = "Timestamp Color",
+		description = "Custom color override for timestamps in the main chat overlay",
+		position = 19,
+		section = "publicClan"
+	)
+	default Color publicTimestampColor()
+	{
+		return null;
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "publicClanLabelColor",
+		name = "Clan Label Color",
+		description = "Custom color override for clan chat labels in the main chat overlay",
+		position = 20,
+		section = "publicClan"
+	)
+	default Color publicClanLabelColor()
+	{
+		return null;
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "publicUsernameColor",
+		name = "Username Color",
+		description = "Custom color override for usernames in the main chat overlay",
+		position = 21,
+		section = "publicClan"
+	)
+	default Color publicUsernameColor()
+	{
+		return null;
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "publicTextColor",
+		name = "Text Color",
+		description = "Custom color override for message text in the main chat overlay",
+		position = 22,
+		section = "publicClan"
+	)
+	default Color publicTextColor()
+	{
+		return null;
+	}
+
 	// ──────────────────────────────────────────────
 	//  PRIVATE CHAT  (above public/clan)
 	// ──────────────────────────────────────────────
 
 	@ConfigItem(
-		keyName = "privateHideWhenChatboxOpen",
-		name = "Hide When Chatbox Visible",
-		description = "Hide this overlay while the in-game chatbox is visible on screen",
-		position = 0,
-		section = "private"
-	)
-	default boolean privateHideWhenChatboxOpen()
-	{
-		return true;
-	}
-
-	@ConfigItem(
-		keyName = "privateWordWrap",
-		name = "Word Wrap",
-		description = "When on, long messages wrap across multiple lines inside the bubble. "
-			+ "When off, messages are truncated to a single line with an ellipsis.",
-		position = 1,
-		section = "private"
-	)
-	default boolean privateWordWrap()
-	{
-		return true;
-	}
-
-	@ConfigItem(
-		keyName = "privateFadeMessages",
-		name = "Enable Fading Messages",
-		description = "When on, messages gradually fade out before disappearing. "
-			+ "When off, messages stay fully visible until they expire.",
-		position = 2,
-		section = "private"
-	)
-	default boolean privateFadeMessages()
-	{
-		return true;
-	}
-
-	@ConfigItem(
 		keyName = "showPrivateChat",
 		name = "Show Private Chat",
 		description = "Display private chat messages",
-		position = 3,
+		position = 0,
 		section = "private"
 	)
 	default boolean showPrivateChat()
@@ -591,10 +630,60 @@ public interface ChatOverlayConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "privateHideWhenChatboxOpen",
+		name = "Hide When Chatbox Visible",
+		description = "Hide this overlay while the in-game chatbox is visible on screen",
+		position = 1,
+		section = "private"
+	)
+	default boolean privateHideWhenChatboxOpen()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "privateOverlayWidth",
+		name = "Overlay Width",
+		description = "Width of the private chat overlay in pixels",
+		position = 2,
+		section = "private"
+	)
+	@Range(min = 200, max = 800)
+	default int privateOverlayWidth()
+	{
+		return 510;
+	}
+
+	@ConfigItem(
+		keyName = "privateOverlayHeight",
+		name = "Overlay Height",
+		description = "Height of the private chat overlay in pixels (used in Bottom to Top mode)",
+		position = 3,
+		section = "private"
+	)
+	@Range(min = 100, max = 800)
+	default int privateOverlayHeight()
+	{
+		return 200;
+	}
+
+	@ConfigItem(
+		keyName = "privateLayoutMode",
+		name = "Layout Mode",
+		description = "Stack messages from top to bottom or bottom to top",
+		position = 4,
+		section = "private"
+	)
+	default LayoutMode privateLayoutMode()
+	{
+		return LayoutMode.TOP_TO_BOTTOM;
+	}
+
+	@ConfigItem(
 		keyName = "privateMaxMessages",
 		name = "Max Messages",
 		description = "Maximum number of private messages shown",
-		position = 4,
+		position = 5,
 		section = "private"
 	)
 	@Range(min = 1, max = 20)
@@ -604,10 +693,61 @@ public interface ChatOverlayConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "privateWordWrap",
+		name = "Word Wrap",
+		description = "When on, long messages wrap across multiple lines inside the bubble. "
+			+ "When off, messages are truncated to a single line with an ellipsis.",
+		position = 6,
+		section = "private"
+	)
+	default boolean privateWordWrap()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "privateMessageDuration",
+		name = "Message Duration (seconds)",
+		description = "How long each private message stays fully visible before disappearing. Set to 0 to keep messages indefinitely.",
+		position = 7,
+		section = "private"
+	)
+	@Range(min = 0, max = 300)
+	default int privateMessageDuration()
+	{
+		return 120;
+	}
+
+	@ConfigItem(
+		keyName = "privateFadeMessages",
+		name = "Enable Fading Messages",
+		description = "When on, messages gradually fade out before disappearing. "
+			+ "When off, messages stay fully visible until they expire.",
+		position = 8,
+		section = "private"
+	)
+	default boolean privateFadeMessages()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "privateBgEnabled",
+		name = "Show Background",
+		description = "Toggle background on/off",
+		position = 9,
+		section = "private"
+	)
+	default boolean privateBgEnabled()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "privateBgColor",
 		name = "Background Color",
 		description = "Background color for the private chat overlay",
-		position = 5,
+		position = 10,
 		section = "private"
 	)
 	@Alpha
@@ -617,22 +757,10 @@ public interface ChatOverlayConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "privateBgEnabled",
-		name = "Show Background",
-		description = "Toggle background on/off",
-		position = 6,
-		section = "private"
-	)
-	default boolean privateBgEnabled()
-	{
-		return true;
-	}
-
-	@ConfigItem(
 		keyName = "privateShowBubbleBorder",
 		name = "Show Bubble Border",
 		description = "Draw a 1px rounded border around each chat bubble",
-		position = 7,
+		position = 11,
 		section = "private"
 	)
 	default boolean privateShowBubbleBorder()
@@ -645,7 +773,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "privateBubbleBorderColor",
 		name = "Bubble Border Color",
 		description = "Color of the bubble border in the private chat overlay",
-		position = 8,
+		position = 12,
 		section = "private"
 	)
 	default Color privateBubbleBorderColor()
@@ -654,66 +782,15 @@ public interface ChatOverlayConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "privateOverlayWidth",
-		name = "Overlay Width",
-		description = "Width of the private chat overlay in pixels",
-		position = 9,
-		section = "private"
-	)
-	@Range(min = 200, max = 800)
-	default int privateOverlayWidth()
-	{
-		return 510;
-	}
-
-	@ConfigItem(
-		keyName = "privateMessageDuration",
-		name = "Message Duration (seconds)",
-		description = "How long each private message stays fully visible before disappearing. Set to 0 to keep messages indefinitely.",
-		position = 10,
-		section = "private"
-	)
-	@Range(min = 0, max = 300)
-	default int privateMessageDuration()
-	{
-		return 120;
-	}
-
-	@ConfigItem(
 		keyName = "privateShowTimestamp",
-		name = "Show Timestamp [HH:MM]",
+		name = "Show Timestamp",
 		description = "Prefix each message with its timestamp",
-		position = 11,
+		position = 13,
 		section = "private"
 	)
 	default boolean privateShowTimestamp()
 	{
 		return true;
-	}
-
-	@ConfigItem(
-		keyName = "privateLayoutMode",
-		name = "Layout Mode",
-		description = "Stack messages from top to bottom or bottom to top",
-		position = 12,
-		section = "private"
-	)
-	default LayoutMode privateLayoutMode()
-	{
-		return LayoutMode.TOP_TO_BOTTOM;
-	}
-
-	@ConfigItem(
-		keyName = "privateOverlayHeight",
-		name = "Overlay Height",
-		description = "Height of the private chat overlay in pixels (used in Bottom to Top mode)",
-		position = 13,
-		section = "private"
-	)
-	@Range(min = 100, max = 800)
-	default int privateOverlayHeight()
-	{
-		return 200;
 	}
 
 	@ConfigItem(
@@ -726,6 +803,45 @@ public interface ChatOverlayConfig extends Config
 	default boolean privateDisableKeywordHighlight()
 	{
 		return true;
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "privateTimestampColor",
+		name = "Timestamp Color",
+		description = "Custom color override for timestamps in the private chat overlay",
+		position = 15,
+		section = "private"
+	)
+	default Color privateTimestampColor()
+	{
+		return null;
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "privateUsernameColor",
+		name = "Username Color",
+		description = "Custom color override for usernames in the private chat overlay",
+		position = 16,
+		section = "private"
+	)
+	default Color privateUsernameColor()
+	{
+		return null;
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "privateTextColor",
+		name = "Text Color",
+		description = "Custom color override for message text in the private chat overlay",
+		position = 17,
+		section = "private"
+	)
+	default Color privateTextColor()
+	{
+		return null;
 	}
 
 	// ──────────────────────────────────────────────
@@ -745,22 +861,10 @@ public interface ChatOverlayConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "clanHideWhenChatboxOpen",
-		name = "Hide When Chatbox Visible",
-		description = "Hide this overlay while the in-game chatbox is visible on screen",
-		position = 1,
-		section = "clan"
-	)
-	default boolean clanHideWhenChatboxOpen()
-	{
-		return true;
-	}
-
-	@ConfigItem(
 		keyName = "clanShowClan",
 		name = "Show Clan Chat Messages",
 		description = "Display regular clan chat messages in this overlay",
-		position = 2,
+		position = 1,
 		section = "clan"
 	)
 	default boolean clanShowClan()
@@ -772,7 +876,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "clanShowGuest",
 		name = "Show Guest Clan Messages",
 		description = "Display guest clan chat messages in this overlay",
-		position = 3,
+		position = 2,
 		section = "clan"
 	)
 	default boolean clanShowGuest()
@@ -784,7 +888,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "clanShowGim",
 		name = "Show GIM Clan Messages",
 		description = "Display Group Ironman clan chat messages in this overlay",
-		position = 4,
+		position = 3,
 		section = "clan"
 	)
 	default boolean clanShowGim()
@@ -796,10 +900,22 @@ public interface ChatOverlayConfig extends Config
 		keyName = "clanShowFriendsChat",
 		name = "Show Friends Chat Messages",
 		description = "Display friends chat messages in this overlay",
-		position = 5,
+		position = 4,
 		section = "clan"
 	)
 	default boolean clanShowFriendsChat()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "clanHideWhenChatboxOpen",
+		name = "Hide When Chatbox Visible",
+		description = "Hide this overlay while the in-game chatbox is visible on screen",
+		position = 5,
+		section = "clan"
+	)
+	default boolean clanHideWhenChatboxOpen()
 	{
 		return true;
 	}
@@ -831,10 +947,60 @@ public interface ChatOverlayConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "clanLayoutMode",
+		name = "Layout Mode",
+		description = "Stack messages from top to bottom or bottom to top",
+		position = 8,
+		section = "clan"
+	)
+	default LayoutMode clanLayoutMode()
+	{
+		return LayoutMode.BOTTOM_TO_TOP;
+	}
+
+	@ConfigItem(
+		keyName = "clanMaxMessages",
+		name = "Max Messages",
+		description = "Maximum number of messages shown in the clan chat overlay",
+		position = 9,
+		section = "clan"
+	)
+	@Range(min = 1, max = 50)
+	default int clanMaxMessages()
+	{
+		return 10;
+	}
+
+	@ConfigItem(
+		keyName = "clanMessageDuration",
+		name = "Message Duration (seconds)",
+		description = "How long each message stays fully visible. Set to 0 to keep indefinitely.",
+		position = 10,
+		section = "clan"
+	)
+	@Range(min = 0, max = 300)
+	default int clanMessageDuration()
+	{
+		return 20;
+	}
+
+	@ConfigItem(
+		keyName = "clanBgEnabled",
+		name = "Show Background",
+		description = "Toggle background on/off",
+		position = 11,
+		section = "clan"
+	)
+	default boolean clanBgEnabled()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "clanBgColor",
 		name = "Background Color",
 		description = "Background color for the dedicated clan chat overlay",
-		position = 8,
+		position = 12,
 		section = "clan"
 	)
 	@Alpha
@@ -844,22 +1010,10 @@ public interface ChatOverlayConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "clanBgEnabled",
-		name = "Show Background",
-		description = "Toggle background on/off",
-		position = 9,
-		section = "clan"
-	)
-	default boolean clanBgEnabled()
-	{
-		return true;
-	}
-
-	@ConfigItem(
 		keyName = "clanShowBubbleBorder",
 		name = "Show Bubble Border",
 		description = "Draw a 1px rounded border around each chat bubble",
-		position = 10,
+		position = 13,
 		section = "clan"
 	)
 	default boolean clanShowBubbleBorder()
@@ -872,7 +1026,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "clanBubbleBorderColor",
 		name = "Bubble Border Color",
 		description = "Color of the bubble border in the clan chat overlay",
-		position = 11,
+		position = 14,
 		section = "clan"
 	)
 	default Color clanBubbleBorderColor()
@@ -881,46 +1035,8 @@ public interface ChatOverlayConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "clanMessageDuration",
-		name = "Message Duration (seconds)",
-		description = "How long each message stays fully visible. Set to 0 to keep indefinitely.",
-		position = 12,
-		section = "clan"
-	)
-	@Range(min = 0, max = 300)
-	default int clanMessageDuration()
-	{
-		return 20;
-	}
-
-	@ConfigItem(
-		keyName = "clanMaxMessages",
-		name = "Max Messages",
-		description = "Maximum number of messages shown in the clan chat overlay",
-		position = 13,
-		section = "clan"
-	)
-	@Range(min = 1, max = 50)
-	default int clanMaxMessages()
-	{
-		return 10;
-	}
-
-	@ConfigItem(
-		keyName = "clanLayoutMode",
-		name = "Layout Mode",
-		description = "Stack messages from top to bottom or bottom to top",
-		position = 14,
-		section = "clan"
-	)
-	default LayoutMode clanLayoutMode()
-	{
-		return LayoutMode.BOTTOM_TO_TOP;
-	}
-
-	@ConfigItem(
 		keyName = "clanShowTimestamp",
-		name = "Show Timestamp [HH:MM]",
+		name = "Show Timestamp",
 		description = "Prefix each message with its timestamp",
 		position = 15,
 		section = "clan"
@@ -942,44 +1058,70 @@ public interface ChatOverlayConfig extends Config
 		return true;
 	}
 
+	@Alpha
+	@ConfigItem(
+		keyName = "clanTimestampColor",
+		name = "Timestamp Color",
+		description = "Custom color override for timestamps in the dedicated clan chat overlay",
+		position = 17,
+		section = "clan"
+	)
+	default Color clanTimestampColor()
+	{
+		return null;
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "clanClanLabelColor",
+		name = "Clan Label Color",
+		description = "Custom color override for clan chat labels in the dedicated clan chat overlay",
+		position = 18,
+		section = "clan"
+	)
+	default Color clanClanLabelColor()
+	{
+		return null;
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "clanUsernameColor",
+		name = "Username Color",
+		description = "Custom color override for usernames in the dedicated clan chat overlay",
+		position = 19,
+		section = "clan"
+	)
+	default Color clanUsernameColor()
+	{
+		return null;
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "clanTextColor",
+		name = "Text Color",
+		description = "Custom color override for message text in the dedicated clan chat overlay",
+		position = 20,
+		section = "clan"
+	)
+	default Color clanTextColor()
+	{
+		return null;
+	}
+
 	// ──────────────────────────────────────────────
 	//  SYSTEM ALERTS  (near player or free overlay)
 	// ──────────────────────────────────────────────
 
 	@ConfigItem(
-		keyName = "systemHideWhenChatboxOpen",
-		name = "Hide When Chatbox Visible",
-		description = "Hide this overlay while the in-game chatbox is visible on screen",
+		keyName = "showSystemAlerts",
+		name = "Show Game Chat",
+		description = "Display game/system messages in the overlay",
 		position = 0,
 		section = "system"
 	)
-	default boolean systemHideWhenChatboxOpen()
-	{
-		return false;
-	}
-
-	@ConfigItem(
-		keyName = "systemWordWrap",
-		name = "Word Wrap",
-		description = "When on, long messages wrap across multiple lines inside the bubble. "
-			+ "When off, messages are truncated to a single line with an ellipsis.",
-		position = 1,
-		section = "system"
-	)
-	default boolean systemWordWrap()
-	{
-		return false;
-	}
-
-	@ConfigItem(
-		keyName = "systemFadeMessages",
-		name = "Enable Fading Messages",
-		description = "When on, messages gradually fade out before disappearing. "
-			+ "When off, messages stay fully visible until they expire.",
-		position = 2,
-		section = "system"
-	)
-	default boolean systemFadeMessages()
+	default boolean showSystemAlerts()
 	{
 		return true;
 	}
@@ -989,7 +1131,7 @@ public interface ChatOverlayConfig extends Config
 		name = "Overlay Mode",
 		description = "Pinned to Player: bubbles float above your character. "
 			+ "Free Overlay: a panel you can drag anywhere on screen.",
-		position = 3,
+		position = 1,
 		section = "system"
 	)
 	default GameOverlayMode systemAlertMode()
@@ -998,35 +1140,48 @@ public interface ChatOverlayConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "showSystemAlerts",
-		name = "Show Game Chat",
-		description = "Display game/system messages in the overlay",
-		position = 4,
+		keyName = "systemPlayerOffset",
+		name = "Vertical Offset (Pinned)",
+		description = "Vertical offset in 3D units above/below the player's head when Pinned to Player. "
+			+ "Positive values move it higher, negative values move it lower.",
+		position = 2,
 		section = "system"
 	)
-	default boolean showSystemAlerts()
+	@Range(min = -500, max = 500)
+	default int systemPlayerOffset()
 	{
-		return true;
+		return 120;
 	}
 
 	@ConfigItem(
-		keyName = "systemAlertDuration",
-		name = "Message Duration (seconds)",
-		description = "How long each game message stays visible",
-		position = 5,
+		keyName = "systemHideWhenChatboxOpen",
+		name = "Hide When Chatbox Visible",
+		description = "Hide this overlay while the in-game chatbox is visible on screen",
+		position = 3,
 		section = "system"
 	)
-	@Range(min = 1, max = 15)
-	default int systemAlertDuration()
+	default boolean systemHideWhenChatboxOpen()
 	{
-		return 5;
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "systemLayoutMode",
+		name = "Layout Mode",
+		description = "Stack messages from top to bottom or bottom to top",
+		position = 4,
+		section = "system"
+	)
+	default LayoutMode systemLayoutMode()
+	{
+		return LayoutMode.BOTTOM_TO_TOP;
 	}
 
 	@ConfigItem(
 		keyName = "systemMaxAlerts",
 		name = "Max Visible Messages",
 		description = "Maximum number of game messages shown at once (oldest removed)",
-		position = 6,
+		position = 5,
 		section = "system"
 	)
 	@Range(min = 1, max = 8)
@@ -1036,10 +1191,49 @@ public interface ChatOverlayConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "systemWordWrap",
+		name = "Word Wrap",
+		description = "When on, long messages wrap across multiple lines inside the bubble. "
+			+ "When off, messages are truncated to a single line with an ellipsis.",
+		position = 6,
+		section = "system"
+	)
+	default boolean systemWordWrap()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "systemAlertDuration",
+		name = "Message Duration (seconds)",
+		description = "How long each game message stays visible",
+		position = 7,
+		section = "system"
+	)
+	@Range(min = 1, max = 15)
+	default int systemAlertDuration()
+	{
+		return 5;
+	}
+
+	@ConfigItem(
+		keyName = "systemFadeMessages",
+		name = "Enable Fading Messages",
+		description = "When on, messages gradually fade out before disappearing. "
+			+ "When off, messages stay fully visible until they expire.",
+		position = 8,
+		section = "system"
+	)
+	default boolean systemFadeMessages()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "systemBgColor",
 		name = "Background Color",
 		description = "Background color for game chat bubbles",
-		position = 7,
+		position = 9,
 		section = "system"
 	)
 	@Alpha
@@ -1052,7 +1246,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "systemShowBubbleBorder",
 		name = "Show Bubble Border",
 		description = "Draw a 1px rounded border around each game chat bubble",
-		position = 8,
+		position = 10,
 		section = "system"
 	)
 	default boolean systemShowBubbleBorder()
@@ -1065,7 +1259,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "systemBubbleBorderColor",
 		name = "Bubble Border Color",
 		description = "Color of the bubble border in the game chat overlay",
-		position = 9,
+		position = 11,
 		section = "system"
 	)
 	default Color systemBubbleBorderColor()
@@ -1074,10 +1268,34 @@ public interface ChatOverlayConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "systemShowTimestamp",
+		name = "Show Timestamp",
+		description = "Prefix each alert with its timestamp",
+		position = 12,
+		section = "system"
+	)
+	default boolean systemShowTimestamp()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "systemDisableKeywordHighlight",
+		name = "Disable Keyword Highlight",
+		description = "Disable keyword and boss alert highlighting in the game chat overlay",
+		position = 13,
+		section = "system"
+	)
+	default boolean systemDisableKeywordHighlight()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "filterSpamAlerts",
 		name = "Filter Spam",
 		description = "Filter out repetitive/spammy system messages using the patterns below",
-		position = 10,
+		position = 14,
 		section = "system"
 	)
 	default boolean filterSpamAlerts()
@@ -1089,7 +1307,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "filterInteractionSpam",
 		name = "Filter Interaction Failures",
 		description = "Filter out repetitive interaction block messages (e.g. 'I can't reach that', 'Nothing interesting happens')",
-		position = 11,
+		position = 15,
 		section = "system"
 	)
 	default boolean filterInteractionSpam()
@@ -1101,7 +1319,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "filterSkillingSpam",
 		name = "Filter Skilling Spam",
 		description = "Filter out repetitive skilling status messages (e.g. 'You swing your axe', 'You get some logs', 'You manage to mine')",
-		position = 12,
+		position = 16,
 		section = "system"
 	)
 	default boolean filterSkillingSpam()
@@ -1113,7 +1331,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "filterCombatLootSpam",
 		name = "Filter Combat/Loot Spam",
 		description = "Filter out minor combat or loot messages (e.g. Ring of Wealth coins, retrieving ammo)",
-		position = 13,
+		position = 17,
 		section = "system"
 	)
 	default boolean filterCombatLootSpam()
@@ -1125,7 +1343,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "filterConsumablesSpam",
 		name = "Filter Consumables",
 		description = "Filter out messages about eating food or drinking potions (e.g. 'You eat the shark', 'It heals some health')",
-		position = 14,
+		position = 18,
 		section = "system"
 	)
 	default boolean filterConsumablesSpam()
@@ -1139,7 +1357,7 @@ public interface ChatOverlayConfig extends Config
 		description = "Comma-separated list of patterns to filter when 'Filter Spam' is on. "
 			+ "Case-insensitive. If a pattern contains * it is treated as a wildcard (e.g. you*reach matches anything starting with 'you' and containing 'reach'). "
 			+ "Otherwise the pattern is a plain substring match.",
-		position = 15,
+		position = 19,
 		section = "system"
 	)
 	default String spamPatterns()
@@ -1157,7 +1375,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "spamCooldownSeconds",
 		name = "Spam Cooldown (seconds)",
 		description = "Minimum seconds between identical system messages. Set to 0 to allow all duplicates.",
-		position = 16,
+		position = 20,
 		section = "system"
 	)
 	@Range(min = 0, max = 30)
@@ -1166,54 +1384,43 @@ public interface ChatOverlayConfig extends Config
 		return 3;
 	}
 
+	@Alpha
 	@ConfigItem(
-		keyName = "systemShowTimestamp",
-		name = "Show Timestamp [HH:MM]",
-		description = "Prefix each alert with its timestamp",
-		position = 17,
+		keyName = "systemTimestampColor",
+		name = "Timestamp Color",
+		description = "Custom color override for timestamps in the game chat overlay",
+		position = 21,
 		section = "system"
 	)
-	default boolean systemShowTimestamp()
+	default Color systemTimestampColor()
 	{
-		return false;
+		return null;
 	}
 
+	@Alpha
 	@ConfigItem(
-		keyName = "systemPlayerOffset",
-		name = "Vertical Offset (Pinned)",
-		description = "Vertical offset in 3D units above/below the player's head when Pinned to Player. "
-			+ "Positive values move it higher, negative values move it lower.",
-		position = 18,
+		keyName = "systemUsernameColor",
+		name = "Username Color",
+		description = "Custom color override for usernames in the game chat overlay",
+		position = 22,
 		section = "system"
 	)
-	@Range(min = -500, max = 500)
-	default int systemPlayerOffset()
+	default Color systemUsernameColor()
 	{
-		return 120;
+		return null;
 	}
 
+	@Alpha
 	@ConfigItem(
-		keyName = "systemLayoutMode",
-		name = "Layout Mode",
-		description = "Stack messages from top to bottom or bottom to top",
-		position = 19,
+		keyName = "systemTextColor",
+		name = "Text Color",
+		description = "Custom color override for message text in the game chat overlay",
+		position = 23,
 		section = "system"
 	)
-	default LayoutMode systemLayoutMode()
+	default Color systemTextColor()
 	{
-		return LayoutMode.BOTTOM_TO_TOP;
-	}
-
-	@ConfigItem(
-		keyName = "systemDisableKeywordHighlight",
-		name = "Disable Keyword Highlight",
-		description = "Disable keyword and boss alert highlighting in the game chat overlay",
-		position = 20,
-		section = "system"
-	)
-	default boolean systemDisableKeywordHighlight()
-	{
-		return false;
+		return null;
 	}
 }
 

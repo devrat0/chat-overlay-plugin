@@ -31,6 +31,18 @@ public class ChatLine
 	/** The clan or FC channel name (e.g. "Laced PVM"), or null for non-channel messages. */
 	private final String channelName;
 
+	private static final java.util.regex.Pattern CA_PREFIX_PATTERN =
+		java.util.regex.Pattern.compile("^((?:<[^>]+>)*)CA_ID:\\d+\\|");
+
+	private static String cleanPrefixes(String msg)
+	{
+		if (msg == null)
+		{
+			return null;
+		}
+		return CA_PREFIX_PATTERN.matcher(msg).replaceFirst("$1");
+	}
+
 
 	public ChatLine(
 		MessageNode messageNode,
@@ -44,7 +56,7 @@ public class ChatLine
 		this.messageNode = messageNode;
 		this.sender = sender == null ? "" : sender;
 		this.rawSender = rawSender == null ? "" : rawSender;
-		this.rawMessage = rawMessage == null ? "" : rawMessage;
+		this.rawMessage = rawMessage == null ? "" : cleanPrefixes(rawMessage);
 		this.timestamp = System.currentTimeMillis();
 		this.category = category;
 		this.chatMessageType = chatMessageType;
@@ -86,7 +98,7 @@ public class ChatLine
 			String currentRaw = (rfmt != null && !rfmt.isEmpty()) ? rfmt : messageNode.getValue();
 			if (currentRaw != null)
 			{
-				return currentRaw;
+				return cleanPrefixes(currentRaw);
 			}
 		}
 		return rawMessage;
