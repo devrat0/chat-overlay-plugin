@@ -228,7 +228,7 @@ public interface ChatOverlayConfig extends Config
 	@Range(min = 0, max = 10)
 	default int fadeInDuration()
 	{
-		return 3;
+		return 1;
 	}
 
 	@ConfigItem(
@@ -241,7 +241,7 @@ public interface ChatOverlayConfig extends Config
 	@Range(min = 0, max = 10)
 	default int fadeOutDuration()
 	{
-		return 3;
+		return 1;
 	}
 
 	// ──────────────────────────────────────────────
@@ -1285,7 +1285,7 @@ public interface ChatOverlayConfig extends Config
 	@Range(min = 1, max = 15)
 	default int systemAlertDuration()
 	{
-		return 5;
+		return 3;
 	}
 
 	@ConfigItem(
@@ -1297,7 +1297,7 @@ public interface ChatOverlayConfig extends Config
 	)
 	default boolean systemFadeIn()
 	{
-		return true;
+		return false;
 	}
 
 	@ConfigItem(
@@ -1316,7 +1316,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "systemBgColor",
 		name = "Background Color",
 		description = "Background color for game chat bubbles",
-		position = 9,
+		position = 10,
 		section = "system"
 	)
 	@Alpha
@@ -1329,7 +1329,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "systemShowBubbleBorder",
 		name = "Show Bubble Border",
 		description = "Draw a 1px rounded border around each game chat bubble",
-		position = 10,
+		position = 11,
 		section = "system"
 	)
 	default boolean systemShowBubbleBorder()
@@ -1342,7 +1342,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "systemBubbleBorderColor",
 		name = "Bubble Border Color",
 		description = "Color of the bubble border in the game chat overlay",
-		position = 11,
+		position = 12,
 		section = "system"
 	)
 	default Color systemBubbleBorderColor()
@@ -1354,7 +1354,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "systemShowTimestamp",
 		name = "Show Timestamp",
 		description = "Prefix each alert with its timestamp",
-		position = 12,
+		position = 13,
 		section = "system"
 	)
 	default boolean systemShowTimestamp()
@@ -1366,7 +1366,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "systemDisableKeywordHighlight",
 		name = "Disable Keyword Highlight",
 		description = "Disable keyword and boss alert highlighting in the game chat overlay",
-		position = 13,
+		position = 14,
 		section = "system"
 	)
 	default boolean systemDisableKeywordHighlight()
@@ -1378,7 +1378,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "filterSpamAlerts",
 		name = "Filter Spam",
 		description = "Filter out repetitive/spammy system messages using the patterns below",
-		position = 14,
+		position = 15,
 		section = "system"
 	)
 	default boolean filterSpamAlerts()
@@ -1390,7 +1390,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "filterInteractionSpam",
 		name = "Filter Interaction Failures",
 		description = "Filter out repetitive interaction block messages (e.g. 'I can't reach that', 'Nothing interesting happens')",
-		position = 15,
+		position = 16,
 		section = "system"
 	)
 	default boolean filterInteractionSpam()
@@ -1402,7 +1402,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "filterSkillingSpam",
 		name = "Filter Skilling Spam",
 		description = "Filter out repetitive skilling status messages (e.g. 'You swing your axe', 'You get some logs', 'You manage to mine')",
-		position = 16,
+		position = 17,
 		section = "system"
 	)
 	default boolean filterSkillingSpam()
@@ -1414,7 +1414,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "filterCombatLootSpam",
 		name = "Filter Combat/Loot Spam",
 		description = "Filter out minor combat or loot messages (e.g. Ring of Wealth coins, retrieving ammo)",
-		position = 17,
+		position = 18,
 		section = "system"
 	)
 	default boolean filterCombatLootSpam()
@@ -1426,7 +1426,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "filterConsumablesSpam",
 		name = "Filter Consumables",
 		description = "Filter out messages about eating food or drinking potions (e.g. 'You eat the shark', 'It heals some health')",
-		position = 18,
+		position = 19,
 		section = "system"
 	)
 	default boolean filterConsumablesSpam()
@@ -1440,7 +1440,7 @@ public interface ChatOverlayConfig extends Config
 		description = "Comma-separated list of patterns to filter when 'Filter Spam' is on. "
 			+ "Case-insensitive. If a pattern contains * it is treated as a wildcard (e.g. you*reach matches anything starting with 'you' and containing 'reach'). "
 			+ "Otherwise the pattern is a plain substring match.",
-		position = 19,
+		position = 20,
 		section = "system"
 	)
 	default String spamPatterns()
@@ -1458,7 +1458,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "spamCooldownSeconds",
 		name = "Spam Cooldown (seconds)",
 		description = "Minimum seconds between identical system messages. Set to 0 to allow all duplicates.",
-		position = 20,
+		position = 21,
 		section = "system"
 	)
 	@Range(min = 0, max = 30)
@@ -1472,7 +1472,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "systemTimestampColor",
 		name = "Timestamp Color",
 		description = "Custom color override for timestamps in the game chat overlay",
-		position = 21,
+		position = 22,
 		section = "system"
 	)
 	default Color systemTimestampColor()
@@ -1485,7 +1485,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "systemUsernameColor",
 		name = "Username Color",
 		description = "Custom color override for usernames in the game chat overlay",
-		position = 22,
+		position = 23,
 		section = "system"
 	)
 	default Color systemUsernameColor()
@@ -1498,7 +1498,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "systemTextColor",
 		name = "Text Color",
 		description = "Custom color override for message text in the game chat overlay",
-		position = 23,
+		position = 24,
 		section = "system"
 	)
 	default Color systemTextColor()
