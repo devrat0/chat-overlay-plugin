@@ -108,7 +108,7 @@ public class ClanChatOverlay extends Overlay {
 
         for (int i = startIdx; i != endIdx; i += step) {
             ChatLine line = messages.get(i);
-            float alpha = renderer.computeAlpha(line, durMs);
+            float alpha = renderer.computeAlpha(line, durMs, config.clanFadeIn(), config.clanFadeOut());
             if (plugin.isPeekActive()) {
                 alpha = 1.0f;
             }

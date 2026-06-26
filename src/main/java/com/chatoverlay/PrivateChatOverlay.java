@@ -97,8 +97,8 @@ public class PrivateChatOverlay extends Overlay
 		for (int i = startIdx; i != endIdx; i += step)
 		{
 			ChatLine line = messages.get(i);
-			float alpha = renderer.computeAlpha(line, durMs);
-			if (plugin.isPeekActive() || (!config.privateFadeMessages() && alpha > 0f))
+			float alpha = renderer.computeAlpha(line, durMs, config.privateFadeIn(), config.privateFadeOut());
+			if (plugin.isPeekActive())
 			{
 				alpha = 1.0f;
 			}

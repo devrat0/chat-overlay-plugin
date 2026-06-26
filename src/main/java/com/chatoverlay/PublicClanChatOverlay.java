@@ -189,8 +189,8 @@ public class PublicClanChatOverlay extends Overlay
 		for (int i = startIdx; i != endIdx; i += step)
 		{
 			ChatLine line = messages.get(i);
-			float alpha = renderer.computeAlpha(line, durMs);
-			if (plugin.isPeekActive() || (!config.publicFadeMessages() && alpha > 0f))
+			float alpha = renderer.computeAlpha(line, durMs, config.publicFadeIn(), config.publicFadeOut());
+			if (plugin.isPeekActive())
 			{
 				alpha = 1.0f;
 			}

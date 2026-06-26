@@ -218,6 +218,32 @@ public interface ChatOverlayConfig extends Config
 		return TimestampFormat.HH_MM;
 	}
 
+	@ConfigItem(
+		keyName = "fadeInDuration",
+		name = "Fade In Duration (seconds)",
+		description = "Duration in seconds for the fade-in effect",
+		position = 12,
+		section = "general"
+	)
+	@Range(min = 0, max = 10)
+	default int fadeInDuration()
+	{
+		return 3;
+	}
+
+	@ConfigItem(
+		keyName = "fadeOutDuration",
+		name = "Fade Out Duration (seconds)",
+		description = "Duration in seconds for the fade-out effect before expiring",
+		position = 13,
+		section = "general"
+	)
+	@Range(min = 0, max = 10)
+	default int fadeOutDuration()
+	{
+		return 3;
+	}
+
 	// ──────────────────────────────────────────────
 	//  KEYWORD HIGHLIGHTING
 	// ──────────────────────────────────────────────
@@ -475,14 +501,25 @@ public interface ChatOverlayConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "publicFadeMessages",
-		name = "Enable Fading Messages",
-		description = "When on, messages gradually fade out before disappearing. "
-			+ "When off, messages stay fully visible until they expire.",
+		keyName = "publicFadeIn",
+		name = "Enable Fade In",
+		description = "When on, public messages gradually fade in when they appear",
 		position = 12,
 		section = "publicClan"
 	)
-	default boolean publicFadeMessages()
+	default boolean publicFadeIn()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "publicFadeOut",
+		name = "Enable Fade Out",
+		description = "When on, public messages gradually fade out before disappearing",
+		position = 13,
+		section = "publicClan"
+	)
+	default boolean publicFadeOut()
 	{
 		return true;
 	}
@@ -719,14 +756,25 @@ public interface ChatOverlayConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "privateFadeMessages",
-		name = "Enable Fading Messages",
-		description = "When on, messages gradually fade out before disappearing. "
-			+ "When off, messages stay fully visible until they expire.",
+		keyName = "privateFadeIn",
+		name = "Enable Fade In",
+		description = "When on, private messages gradually fade in when they appear",
 		position = 8,
 		section = "private"
 	)
-	default boolean privateFadeMessages()
+	default boolean privateFadeIn()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "privateFadeOut",
+		name = "Enable Fade Out",
+		description = "When on, private messages gradually fade out before disappearing",
+		position = 9,
+		section = "private"
+	)
+	default boolean privateFadeOut()
 	{
 		return true;
 	}
@@ -1110,6 +1158,30 @@ public interface ChatOverlayConfig extends Config
 		return null;
 	}
 
+	@ConfigItem(
+		keyName = "clanFadeIn",
+		name = "Enable Fade In",
+		description = "When on, clan messages gradually fade in when they appear",
+		position = 21,
+		section = "clan"
+	)
+	default boolean clanFadeIn()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "clanFadeOut",
+		name = "Enable Fade Out",
+		description = "When on, clan messages gradually fade out before disappearing",
+		position = 22,
+		section = "clan"
+	)
+	default boolean clanFadeOut()
+	{
+		return true;
+	}
+
 	// ──────────────────────────────────────────────
 	//  SYSTEM ALERTS  (near player or free overlay)
 	// ──────────────────────────────────────────────
@@ -1217,14 +1289,25 @@ public interface ChatOverlayConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "systemFadeMessages",
-		name = "Enable Fading Messages",
-		description = "When on, messages gradually fade out before disappearing. "
-			+ "When off, messages stay fully visible until they expire.",
+		keyName = "systemFadeIn",
+		name = "Enable Fade In",
+		description = "When on, game messages gradually fade in when they appear",
 		position = 8,
 		section = "system"
 	)
-	default boolean systemFadeMessages()
+	default boolean systemFadeIn()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "systemFadeOut",
+		name = "Enable Fade Out",
+		description = "When on, game messages gradually fade out before disappearing",
+		position = 9,
+		section = "system"
+	)
+	default boolean systemFadeOut()
 	{
 		return true;
 	}

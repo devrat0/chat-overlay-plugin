@@ -381,7 +381,7 @@ public class ChatOverlayPlugin extends Plugin
 		{
 			for (String coxMsg : RaidAlertMessages.COX_MESSAGES)
 			{
-				if (text.contains(coxMsg))
+				if (text.contains(coxMsg.toLowerCase()))
 				{
 					return true;
 				}
@@ -393,7 +393,7 @@ public class ChatOverlayPlugin extends Plugin
 		{
 			for (String tobMsg : RaidAlertMessages.TOB_MESSAGES)
 			{
-				if (text.contains(tobMsg))
+				if (text.contains(tobMsg.toLowerCase()))
 				{
 					return true;
 				}
@@ -405,7 +405,7 @@ public class ChatOverlayPlugin extends Plugin
 		{
 			for (String toaMsg : RaidAlertMessages.TOA_MESSAGES)
 			{
-				if (text.contains(toaMsg))
+				if (text.contains(toaMsg.toLowerCase()))
 				{
 					return true;
 				}

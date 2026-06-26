@@ -165,8 +165,8 @@ public class GameOverlay extends Overlay
 		for (int i = alerts.size() - 1; i >= 0; i--)
 		{
 			ChatLine alert = alerts.get(i);
-			float alpha = renderer.computeAlphaWithFadeIn(alert, durationMs);
-			if (plugin.isPeekActive() || (!config.systemFadeMessages() && alpha > 0f))
+			float alpha = renderer.computeAlpha(alert, durationMs, config.systemFadeIn(), config.systemFadeOut());
+			if (plugin.isPeekActive())
 			{
 				alpha = 1.0f;
 			}
@@ -287,8 +287,8 @@ public class GameOverlay extends Overlay
 		for (int i = startIdx; i != endIdx; i += step)
 		{
 			ChatLine alert = alerts.get(i);
-			float alpha = renderer.computeAlphaWithFadeIn(alert, durationMs);
-			if (plugin.isPeekActive() || (!config.systemFadeMessages() && alpha > 0f))
+			float alpha = renderer.computeAlpha(alert, durationMs, config.systemFadeIn(), config.systemFadeOut());
+			if (plugin.isPeekActive())
 			{
 				alpha = 1.0f;
 			}

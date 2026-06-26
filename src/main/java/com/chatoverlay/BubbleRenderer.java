@@ -95,62 +95,51 @@ public class BubbleRenderer
 	// ── Alpha ────────────────────────────────────────────────────────────────
 
 	/**
-	 * Standard fade-out only: opaque until 3 s before {@code durMs}, then fades to 0.
-	 * Returns 1.0 when {@code durMs} is 0 (infinite).
+	 * Computes the message alpha based on its age, duration, and configurable fade-in and fade-out settings.
 	 */
-	public float computeAlpha(ChatLine line, long durMs)
+	public float computeAlpha(ChatLine line, long durMs, boolean fadeIn, boolean fadeOut)
 	{
-		float baseAlpha;
-		long ageMs = line.getAge();
 		if (durMs <= 0)
 		{
-			baseAlpha = 1.0f;
-		}
-		else
-		{
-			long fadeWindowMs = Math.min(3000L, durMs);
-			long fadeStartMs  = durMs - fadeWindowMs;
-			if (ageMs < fadeStartMs)
-			{
-				baseAlpha = 1.0f;
-			}
-			else
-			{
-				baseAlpha = Math.max(0f, 1.0f - (float) (ageMs - fadeStartMs) / fadeWindowMs);
-			}
+			return 1.0f;
 		}
 
-		if (line.isPruned())
-		{
-			float pruneAlpha = Math.max(0f, 1.0f - (float) line.getPruneAge() / 1000f);
-			return Math.min(baseAlpha, pruneAlpha);
-		}
-		return baseAlpha;
-	}
-
-	/**
-	 * Fade-in over first 10% of lifetime, fully opaque until 3 s before expiry, then fades out.
-	 * Used by GameOverlay.
-	 */
-	public float computeAlphaWithFadeIn(ChatLine line, long durationMs)
-	{
 		long ageMs = line.getAge();
-		long fadeWindowMs = Math.min(3000L, durationMs);
-		long fadeStartMs  = durationMs - fadeWindowMs;
-		long fadeInEndMs  = Math.min((long) (durationMs * 0.1f), fadeStartMs);
+		float baseAlpha = 1.0f;
 
-		float baseAlpha;
-		if (fadeInEndMs > 0 && ageMs < fadeInEndMs)
+		if (fadeIn)
 		{
-			baseAlpha = (float) ageMs / fadeInEndMs;
+			long fadeInDurationMs = config.fadeInDuration() * 1000L;
+			if (fadeInDurationMs > 0)
+			{
+				long fadeInEndMs = Math.min(fadeInDurationMs, durMs);
+				if (ageMs < fadeInEndMs)
+				{
+					baseAlpha = (float) ageMs / fadeInEndMs;
+				}
+			}
 		}
-		else if (ageMs < fadeStartMs)
+		
+		if (fadeOut)
 		{
-			baseAlpha = 1.0f;
+			long fadeOutDurationMs = config.fadeOutDuration() * 1000L;
+			if (fadeOutDurationMs > 0)
+			{
+				long fadeWindowMs = Math.min(fadeOutDurationMs, durMs);
+				long fadeStartMs  = durMs - fadeWindowMs;
+				if (ageMs >= fadeStartMs)
+				{
+					float fadeOutAlpha = Math.max(0f, 1.0f - (float) (ageMs - fadeStartMs) / fadeWindowMs);
+					baseAlpha = Math.min(baseAlpha, fadeOutAlpha);
+				}
+			}
 		}
 		else
 		{
-			baseAlpha = Math.max(0f, 1.0f - (float) (ageMs - fadeStartMs) / fadeWindowMs);
+			if (ageMs >= durMs)
+			{
+				baseAlpha = 0f;
+			}
 		}
 
 		if (line.isPruned())
