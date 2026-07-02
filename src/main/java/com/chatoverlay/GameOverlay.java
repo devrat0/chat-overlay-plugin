@@ -25,8 +25,6 @@ import net.runelite.client.ui.overlay.OverlayPosition;
  */
 public class GameOverlay extends Overlay
 {
-	private static final int MAX_BUBBLE_WIDTH    = 350;
-
 	private final Client            client;
 	private final ChatOverlayPlugin plugin;
 	private final ChatOverlayConfig config;
@@ -178,7 +176,8 @@ public class GameOverlay extends Overlay
 			AlertContent ac   = buildAlert(alert, alpha);
 			String plain      = ac.plain;
 			List<ColorSegment> faded = ac.faded;
-			int    innerWidth = MAX_BUBBLE_WIDTH - paddingX * 2;
+			int    maxWidth   = config.systemOverlayWidth();
+			int    innerWidth = maxWidth - paddingX * 2;
 
 			int bubbleWidth;
 			int bubbleHeight;
@@ -276,10 +275,13 @@ public class GameOverlay extends Overlay
 		int paddingY      = config.bubblePaddingY();
 		int bubbleSpacing = config.bubbleSpacing();
 
-		int y          = 0;
-		int totalWidth = 0;
+		int maxWidth      = config.systemOverlayWidth();
+		int maxHeight     = config.systemOverlayHeight();
 
 		LayoutMode layoutMode = config.systemLayoutMode();
+		int y          = (layoutMode == LayoutMode.BOTTOM_TO_TOP) ? maxHeight : 0;
+		int totalWidth = 0;
+
 		int startIdx = (layoutMode == LayoutMode.BOTTOM_TO_TOP) ? 0 : alerts.size() - 1;
 		int endIdx   = (layoutMode == LayoutMode.BOTTOM_TO_TOP) ? alerts.size() : -1;
 		int step     = (layoutMode == LayoutMode.BOTTOM_TO_TOP) ? 1 : -1;
@@ -300,7 +302,7 @@ public class GameOverlay extends Overlay
 			AlertContent ac   = buildAlert(alert, alpha);
 			String plain      = ac.plain;
 			List<ColorSegment> faded = ac.faded;
-			int    innerWidth = MAX_BUBBLE_WIDTH - paddingX * 2;
+			int    innerWidth = maxWidth - paddingX * 2;
 
 			int bubbleWidth;
 			int bubbleHeight;
@@ -320,16 +322,35 @@ public class GameOverlay extends Overlay
 				bubbleWidth  = maxLineW + paddingX * 2;
 				bubbleHeight = fm.getHeight() * lineRanges.size() + paddingY * 2;
 
+				int bubbleY;
+				if (layoutMode == LayoutMode.BOTTOM_TO_TOP)
+				{
+					y -= bubbleHeight;
+					if (y < 0)
+					{
+						break;
+					}
+					bubbleY = y;
+				}
+				else
+				{
+					if (y + bubbleHeight > maxHeight)
+					{
+						break;
+					}
+					bubbleY = y;
+				}
+
 				boolean isHighlighted = !config.systemDisableKeywordHighlight() && plugin.shouldHighlight(alert);
 				Color bgColor = isHighlighted ? config.highlightBgColor() : config.systemBgColor();
 				Color borderColor = isHighlighted ? config.highlightBorderColor() : config.systemBubbleBorderColor();
 				boolean showBorder = isHighlighted ? config.highlightShowBorder() : config.systemShowBubbleBorder();
 
-				renderer.drawBubble(graphics, 0, y, bubbleWidth, bubbleHeight, bgColor, alpha);
-				renderer.drawBubbleBorder(graphics, 0, y, bubbleWidth, bubbleHeight,
+				renderer.drawBubble(graphics, 0, bubbleY, bubbleWidth, bubbleHeight, bgColor, alpha);
+				renderer.drawBubbleBorder(graphics, 0, bubbleY, bubbleWidth, bubbleHeight,
 					borderColor, showBorder, plugin.isPeekActive(), alpha);
 
-				int textY = y + paddingY + fm.getAscent();
+				int textY = bubbleY + paddingY + fm.getAscent();
 				for (int[] range : lineRanges)
 				{
 					List<ColorSegment> lineSegs = renderer.sliceSegments(faded, range[0], range[1]);
@@ -344,28 +365,69 @@ public class GameOverlay extends Overlay
 				bubbleWidth  = textWidth + paddingX * 2;
 				bubbleHeight = fm.getHeight() + paddingY * 2;
 
+				int bubbleY;
+				if (layoutMode == LayoutMode.BOTTOM_TO_TOP)
+				{
+					y -= bubbleHeight;
+					if (y < 0)
+					{
+						break;
+					}
+					bubbleY = y;
+				}
+				else
+				{
+					if (y + bubbleHeight > maxHeight)
+					{
+						break;
+					}
+					bubbleY = y;
+				}
+
 				boolean isHighlighted = !config.systemDisableKeywordHighlight() && plugin.shouldHighlight(alert);
 				Color bgColor = isHighlighted ? config.highlightBgColor() : config.systemBgColor();
 				Color borderColor = isHighlighted ? config.highlightBorderColor() : config.systemBubbleBorderColor();
 				boolean showBorder = isHighlighted ? config.highlightShowBorder() : config.systemShowBubbleBorder();
 
-				renderer.drawBubble(graphics, 0, y, bubbleWidth, bubbleHeight, bgColor, alpha);
-				renderer.drawBubbleBorder(graphics, 0, y, bubbleWidth, bubbleHeight,
+				renderer.drawBubble(graphics, 0, bubbleY, bubbleWidth, bubbleHeight, bgColor, alpha);
+				renderer.drawBubbleBorder(graphics, 0, bubbleY, bubbleWidth, bubbleHeight,
 					borderColor, showBorder, plugin.isPeekActive(), alpha);
 
-				int textY = y + paddingY + fm.getAscent();
+				int textY = bubbleY + paddingY + fm.getAscent();
 				renderer.renderSegments(graphics, faded, paddingX, textY, fm, paddingX + textWidth);
 			}
 
 			totalWidth = Math.max(totalWidth, bubbleWidth);
-			y += bubbleHeight + bubbleSpacing;
+			if (layoutMode == LayoutMode.BOTTOM_TO_TOP)
+			{
+				y -= bubbleSpacing;
+				if (y < 0)
+				{
+					break;
+				}
+			}
+			else
+			{
+				y += bubbleHeight + bubbleSpacing;
+			}
 		}
 
-		if (y == 0)
+		if (layoutMode == LayoutMode.BOTTOM_TO_TOP)
 		{
-			return null;
+			if (y == maxHeight)
+			{
+				return null;
+			}
+			return new Dimension(Math.max(totalWidth, maxWidth), maxHeight);
 		}
-		return new Dimension(totalWidth, y);
+		else
+		{
+			if (y == 0)
+			{
+				return null;
+			}
+			return new Dimension(Math.max(totalWidth, maxWidth), y);
+		}
 	}
 
 	// ── Helpers ──────────────────────────────────────────────────────────────

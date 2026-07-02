@@ -167,10 +167,18 @@ public class PrivateChatOverlay extends Overlay
 				if (layoutMode == LayoutMode.BOTTOM_TO_TOP)
 				{
 					y -= bubbleHeight;
+					if (y < 0)
+					{
+						break;
+					}
 					bubbleY = y;
 				}
 				else
 				{
+					if (y + bubbleHeight > maxHeight)
+					{
+						break;
+					}
 					bubbleY = y;
 				}
 
@@ -208,10 +216,18 @@ public class PrivateChatOverlay extends Overlay
 				if (layoutMode == LayoutMode.BOTTOM_TO_TOP)
 				{
 					y -= bubbleHeight;
+					if (y < 0)
+					{
+						break;
+					}
 					bubbleY = y;
 				}
 				else
 				{
+					if (y + bubbleHeight > maxHeight)
+					{
+						break;
+					}
 					bubbleY = y;
 				}
 

@@ -176,8 +176,14 @@ public class ClanChatOverlay extends Overlay {
                 int bubbleY;
                 if (layoutMode == LayoutMode.BOTTOM_TO_TOP) {
                     y -= bubbleHeight;
+                    if (y < 0) {
+                        break;
+                    }
                     bubbleY = y;
                 } else {
+                    if (y + bubbleHeight > maxHeight) {
+                        break;
+                    }
                     bubbleY = y;
                 }
 
@@ -210,8 +216,14 @@ public class ClanChatOverlay extends Overlay {
                 int bubbleY;
                 if (layoutMode == LayoutMode.BOTTOM_TO_TOP) {
                     y -= bubbleHeight;
+                    if (y < 0) {
+                        break;
+                    }
                     bubbleY = y;
                 } else {
+                    if (y + bubbleHeight > maxHeight) {
+                        break;
+                    }
                     bubbleY = y;
                 }
 

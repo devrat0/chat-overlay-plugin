@@ -16,10 +16,11 @@ import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.input.KeyManager;
+import net.runelite.client.input.KeyListener;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
-import net.runelite.client.util.HotkeyListener;
+import java.awt.event.KeyEvent;
 import net.runelite.client.util.Text;
 import net.runelite.api.Player;
 import net.runelite.api.widgets.Widget;
@@ -48,7 +49,7 @@ public class ChatOverlayPlugin extends Plugin
 	private final FilterMatcher      filterMatcher  = new FilterMatcher();
 
 	private volatile boolean   peekActive   = false;
-	private HotkeyListener     peekListener;
+	private KeyListener        peekListener;
 	private final java.util.List<java.util.regex.Pattern> compiledHighlightPatterns = new java.util.ArrayList<>();
 
 	// ── Queries used by overlays ──────────────────────────────────────────────
@@ -80,7 +81,7 @@ public class ChatOverlayPlugin extends Plugin
 
 	public boolean isPeekActive()
 	{
-		return peekActive && config.peekEnabled();
+		return peekActive && config.peekEnabled() && !isChatboxOpen();
 	}
 
 	public ChatMessageManager getMessageManager()
@@ -115,13 +116,42 @@ public class ChatOverlayPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
-		peekListener = new HotkeyListener(() -> config.peekKey())
+		peekListener = new KeyListener()
 		{
 			@Override
-			public void hotkeyPressed()  { peekActive = true;  }
+			public void keyPressed(KeyEvent e)
+			{
+				if (config.peekEnabled() && config.peekKey().matches(e))
+				{
+					peekActive = true;
+				}
+			}
 
 			@Override
-			public void hotkeyReleased() { peekActive = false; }
+			public void keyReleased(KeyEvent e)
+			{
+				if (config.peekKey().matches(e))
+				{
+					peekActive = false;
+				}
+			}
+
+			@Override
+			public void keyTyped(KeyEvent e)
+			{
+			}
+
+			@Override
+			public void focusLost()
+			{
+				peekActive = false;
+			}
+
+			@Override
+			public boolean isEnabledOnLoginScreen()
+			{
+				return false;
+			}
 		};
 		keyManager.registerKeyListener(peekListener);
 
@@ -370,42 +400,6 @@ public class ChatOverlayPlugin extends Plugin
 			for (java.util.regex.Pattern pattern : compiledHighlightPatterns)
 			{
 				if (pattern.matcher(text).find())
-				{
-					return true;
-				}
-			}
-		}
-
-		// Check Chambers of Xeric alerts
-		if (config.highlightCoX())
-		{
-			for (String coxMsg : RaidAlertMessages.COX_MESSAGES)
-			{
-				if (text.contains(coxMsg.toLowerCase()))
-				{
-					return true;
-				}
-			}
-		}
-
-		// Check Theatre of Blood alerts
-		if (config.highlightToB())
-		{
-			for (String tobMsg : RaidAlertMessages.TOB_MESSAGES)
-			{
-				if (text.contains(tobMsg.toLowerCase()))
-				{
-					return true;
-				}
-			}
-		}
-
-		// Check Tombs of Amascut alerts
-		if (config.highlightToA())
-		{
-			for (String toaMsg : RaidAlertMessages.TOA_MESSAGES)
-			{
-				if (text.contains(toaMsg.toLowerCase()))
 				{
 					return true;
 				}
