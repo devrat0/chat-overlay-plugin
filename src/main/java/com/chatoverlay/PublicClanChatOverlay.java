@@ -122,6 +122,14 @@ public class PublicClanChatOverlay extends Overlay
 			{
 				String localName    = plugin.getLocalPlayerName();
 				String displayName  = (localName != null && !localName.isEmpty()) ? localName : "You";
+				if (config.showPlayerIcons())
+				{
+					int iconIdx = plugin.getLocalPlayerIconIndex();
+					if (iconIdx != -1)
+					{
+						displayName = "<img=" + iconIdx + ">" + displayName;
+					}
+				}
 				Color  typingSender = new Color(255, 255, 255);
 				Color  typingMsg    = new Color(255, 255, 0);
 
@@ -376,6 +384,14 @@ public class PublicClanChatOverlay extends Overlay
 			{
 				String localName    = plugin.getLocalPlayerName();
 				String displayName  = (localName != null && !localName.isEmpty()) ? localName : "You";
+				if (config.showPlayerIcons())
+				{
+					int iconIdx = plugin.getLocalPlayerIconIndex();
+					if (iconIdx != -1)
+					{
+						displayName = "<img=" + iconIdx + ">" + displayName;
+					}
+				}
 				Color  typingSender = new Color(255, 255, 255);
 				Color  typingMsg    = new Color(255, 255, 0);
 

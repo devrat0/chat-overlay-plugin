@@ -25,6 +25,7 @@ import net.runelite.client.util.Text;
 import net.runelite.api.Player;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.config.Keybind;
+import net.runelite.api.vars.AccountType;
 
 @Slf4j
 @PluginDescriptor(
@@ -65,6 +66,31 @@ public class ChatOverlayPlugin extends Plugin
 	{
 		Player p = client.getLocalPlayer();
 		return p != null ? p.getName() : null;
+	}
+
+	public int getLocalPlayerIconIndex()
+	{
+		AccountType accountType = client.getAccountType();
+		if (accountType == null)
+		{
+			return -1;
+		}
+
+		switch (accountType)
+		{
+			case IRONMAN:
+				return 2;
+			case ULTIMATE_IRONMAN:
+				return 3;
+			case HARDCORE_IRONMAN:
+				return 4;
+			case GROUP_IRONMAN:
+				return 41;
+			case HARDCORE_GROUP_IRONMAN:
+				return 42;
+			default:
+				return -1;
+		}
 	}
 
 	public String getChatboxTypedText()
@@ -228,6 +254,23 @@ public class ChatOverlayPlugin extends Plugin
 		ChatMessageType type         = event.getType();
 		String          rawSenderName = event.getMessageNode().getName();
 		String          sender        = sanitizeName(rawSenderName);
+
+		if (config.showPlayerIcons())
+		{
+			String localName = getLocalPlayerName();
+			if (localName != null && sender.equalsIgnoreCase(localName))
+			{
+				if (!rawSenderName.contains("<img="))
+				{
+					int iconIdx = getLocalPlayerIconIndex();
+					if (iconIdx != -1)
+					{
+						rawSenderName = "<img=" + iconIdx + ">" + rawSenderName;
+					}
+				}
+			}
+		}
+
 		String          rawMsg        = event.getMessageNode().getValue();
 		String          lower         = ColorTagParser.stripTags(rawMsg).toLowerCase().trim();
 
