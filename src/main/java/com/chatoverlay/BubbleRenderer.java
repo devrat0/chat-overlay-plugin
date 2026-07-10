@@ -57,18 +57,44 @@ public class BubbleRenderer
 	public Font resolveFont()
 	{
 		Font base;
+		boolean isShadowBold = config.textStyle() == TextStyle.SHADOW_BOLD;
+
 		switch (config.fontType())
 		{
-			case RUNESCAPE:       base = FontManager.getRunescapeFont();      break;
-			case RUNESCAPE_SMALL: base = FontManager.getRunescapeSmallFont(); break;
-			case RUNESCAPE_BOLD:  base = FontManager.getRunescapeBoldFont();  break;
-			case ARIAL:           base = new Font("Arial", Font.PLAIN, config.fontSize()); break;
-			case DIALOG:          base = new Font(Font.DIALOG, Font.PLAIN, config.fontSize()); break;
-			case SANS_SERIF:      base = new Font(Font.SANS_SERIF, Font.PLAIN, config.fontSize()); break;
-			case SERIF:           base = new Font(Font.SERIF, Font.PLAIN, config.fontSize()); break;
-			case MONOSPACED:      base = new Font(Font.MONOSPACED, Font.PLAIN, config.fontSize()); break;
-			case CUSTOM:          base = new Font(config.customFontName(), Font.PLAIN, config.fontSize()); break;
-			default:              base = FontManager.getRunescapeBoldFont();  break;
+			case RUNESCAPE:
+				base = isShadowBold ? FontManager.getRunescapeBoldFont() : FontManager.getRunescapeFont();
+				break;
+			case RUNESCAPE_SMALL:
+				base = FontManager.getRunescapeSmallFont();
+				if (isShadowBold)
+				{
+					base = base.deriveFont(Font.BOLD);
+				}
+				break;
+			case RUNESCAPE_BOLD:
+				base = FontManager.getRunescapeBoldFont();
+				break;
+			case ARIAL:
+				base = new Font("Arial", isShadowBold ? Font.BOLD : Font.PLAIN, config.fontSize());
+				break;
+			case DIALOG:
+				base = new Font(Font.DIALOG, isShadowBold ? Font.BOLD : Font.PLAIN, config.fontSize());
+				break;
+			case SANS_SERIF:
+				base = new Font(Font.SANS_SERIF, isShadowBold ? Font.BOLD : Font.PLAIN, config.fontSize());
+				break;
+			case SERIF:
+				base = new Font(Font.SERIF, isShadowBold ? Font.BOLD : Font.PLAIN, config.fontSize());
+				break;
+			case MONOSPACED:
+				base = new Font(Font.MONOSPACED, isShadowBold ? Font.BOLD : Font.PLAIN, config.fontSize());
+				break;
+			case CUSTOM:
+				base = new Font(config.customFontName(), isShadowBold ? Font.BOLD : Font.PLAIN, config.fontSize());
+				break;
+			default:
+				base = FontManager.getRunescapeBoldFont();
+				break;
 		}
 		return base.deriveFont((float) getSnappedFontSize());
 	}
@@ -281,33 +307,59 @@ public class BubbleRenderer
 		return renderSegmentsDirectly(graphics, segments, x, y, fm, maxX);
 	}
 
+	private void drawBackgroundPass(Graphics2D graphics,
+		List<ColorSegment> segments,
+		int x, int y,
+		FontMetrics fm,
+		int maxX,
+		int dx, int dy)
+	{
+		int passX = x;
+		for (ColorSegment seg : segments)
+		{
+			if (passX >= maxX)
+			{
+				break;
+			}
+			if (seg.getImage() != null)
+			{
+				passX += seg.getImage().getWidth() + 2;
+				continue;
+			}
+			String text = clipIfNeeded(seg.getText(), fm, maxX - passX);
+			if (text.isEmpty())
+			{
+				break;
+			}
+			graphics.setColor(new Color(0, 0, 0, seg.getColor().getAlpha()));
+			graphics.drawString(text, passX + dx, y + dy);
+			passX += fm.stringWidth(text);
+		}
+	}
+
 	private int renderSegmentsDirectly(Graphics2D graphics,
 		List<ColorSegment> segments,
 		int x, int y,
 		FontMetrics fm,
 		int maxX)
 	{
-		// Shadow pass — black at (+1, +1)
-		int shadowX = x;
-		for (ColorSegment seg : segments)
+		TextStyle style = config.textStyle();
+
+		if (style == TextStyle.OUTLINE || style == TextStyle.OUTLINE_SHADOW)
 		{
-			if (shadowX >= maxX)
-			{
-				break;
-			}
-			if (seg.getImage() != null)
-			{
-				shadowX += seg.getImage().getWidth() + 2;
-				continue;
-			}
-			String text = clipIfNeeded(seg.getText(), fm, maxX - shadowX);
-			if (text.isEmpty())
-			{
-				break;
-			}
-			graphics.setColor(new Color(0, 0, 0, seg.getColor().getAlpha()));
-			graphics.drawString(text, shadowX + 1, y + 1);
-			shadowX += fm.stringWidth(text);
+			drawBackgroundPass(graphics, segments, x, y, fm, maxX, -1, 0);
+			drawBackgroundPass(graphics, segments, x, y, fm, maxX, 1, 0);
+			drawBackgroundPass(graphics, segments, x, y, fm, maxX, 0, -1);
+			drawBackgroundPass(graphics, segments, x, y, fm, maxX, 0, 1);
+			drawBackgroundPass(graphics, segments, x, y, fm, maxX, -1, -1);
+			drawBackgroundPass(graphics, segments, x, y, fm, maxX, 1, -1);
+			drawBackgroundPass(graphics, segments, x, y, fm, maxX, -1, 1);
+			drawBackgroundPass(graphics, segments, x, y, fm, maxX, 1, 1);
+		}
+
+		if (style == TextStyle.SHADOW || style == TextStyle.SHADOW_BOLD || style == TextStyle.OUTLINE_SHADOW)
+		{
+			drawBackgroundPass(graphics, segments, x, y, fm, maxX, 1, 1);
 		}
 
 		// Main pass

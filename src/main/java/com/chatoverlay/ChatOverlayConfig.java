@@ -159,10 +159,22 @@ public interface ChatOverlayConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "textStyle",
+		name = "Text Style",
+		description = "Visual style and accent options for the overlay text",
+		position = 7,
+		section = "general"
+	)
+	default TextStyle textStyle()
+	{
+		return TextStyle.SHADOW;
+	}
+
+	@ConfigItem(
 		keyName = "showChatboxMessage",
 		name = "Show Chatbox Message",
 		description = "Display a bubble under the main chat overlay showing what you are currently typing",
-		position = 7,
+		position = 8,
 		section = "general"
 	)
 	default boolean showChatboxMessage()
@@ -174,7 +186,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "peekEnabled",
 		name = "Peek Mode",
 		description = "Hold the peek key to temporarily reveal all faded messages at full opacity",
-		position = 8,
+		position = 9,
 		section = "general"
 	)
 	default boolean peekEnabled()
@@ -186,7 +198,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "peekKey",
 		name = "Peek Key",
 		description = "Hold this key to peek at all chat messages at full opacity",
-		position = 9,
+		position = 10,
 		section = "general"
 	)
 	default Keybind peekKey()
@@ -198,7 +210,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "showPlayerIcons",
 		name = "Show Player Icons",
 		description = "Display Ironman and J-Mod crown icons next to sender names in chat bubbles",
-		position = 10,
+		position = 11,
 		section = "general"
 	)
 	default boolean showPlayerIcons()
@@ -210,7 +222,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "timestampFormat",
 		name = "Timestamp Format",
 		description = "Format style for chat message timestamps",
-		position = 11,
+		position = 12,
 		section = "general"
 	)
 	default TimestampFormat timestampFormat()
@@ -222,7 +234,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "fadeInDuration",
 		name = "Fade In Duration (seconds)",
 		description = "Duration in seconds for the fade-in effect",
-		position = 12,
+		position = 13,
 		section = "general"
 	)
 	@Range(min = 0, max = 10)
@@ -235,7 +247,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "fadeOutDuration",
 		name = "Fade Out Duration (seconds)",
 		description = "Duration in seconds for the fade-out effect before expiring",
-		position = 13,
+		position = 14,
 		section = "general"
 	)
 	@Range(min = 0, max = 10)

@@ -292,8 +292,29 @@ public class PrivateChatOverlay extends Overlay
 		{
 			Color tc = new Color(tsColor.getRed(), tsColor.getGreen(),
 				tsColor.getBlue(), (int) (tsColor.getAlpha() * alpha));
-			graphics.setColor(new Color(0, 0, 0, tc.getAlpha()));
-			graphics.drawString(timestampStr, x + 1, textY + 1);
+			Color black = new Color(0, 0, 0, tc.getAlpha());
+
+			TextStyle style = config.textStyle();
+
+			if (style == TextStyle.OUTLINE || style == TextStyle.OUTLINE_SHADOW)
+			{
+				graphics.setColor(black);
+				graphics.drawString(timestampStr, x - 1, textY);
+				graphics.drawString(timestampStr, x + 1, textY);
+				graphics.drawString(timestampStr, x, textY - 1);
+				graphics.drawString(timestampStr, x, textY + 1);
+				graphics.drawString(timestampStr, x - 1, textY - 1);
+				graphics.drawString(timestampStr, x + 1, textY - 1);
+				graphics.drawString(timestampStr, x - 1, textY + 1);
+				graphics.drawString(timestampStr, x + 1, textY + 1);
+			}
+
+			if (style == TextStyle.SHADOW || style == TextStyle.SHADOW_BOLD || style == TextStyle.OUTLINE_SHADOW)
+			{
+				graphics.setColor(black);
+				graphics.drawString(timestampStr, x + 1, textY + 1);
+			}
+
 			graphics.setColor(tc);
 			graphics.drawString(timestampStr, x, textY);
 		}
