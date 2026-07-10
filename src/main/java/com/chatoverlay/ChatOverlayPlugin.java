@@ -108,7 +108,7 @@ public class ChatOverlayPlugin extends Plugin
 
 	public boolean isPeekActive()
 	{
-		return peekActive && config.peekEnabled() && !isChatboxOpen();
+		return peekActive && config.peekEnabled();
 	}
 
 	public ChatMessageManager getMessageManager()
