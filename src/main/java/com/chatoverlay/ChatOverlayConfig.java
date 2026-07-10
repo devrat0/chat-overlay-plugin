@@ -203,7 +203,7 @@ public interface ChatOverlayConfig extends Config
 	)
 	default Keybind peekKey()
 	{
-		return new Keybind(KeyEvent.VK_ALT, 0);
+		return Keybind.ALT;
 	}
 
 	@ConfigItem(
@@ -1506,6 +1506,18 @@ public interface ChatOverlayConfig extends Config
 	default Color systemTextColor()
 	{
 		return null;
+	}
+
+	@ConfigItem(
+		keyName = "filterSystemConsole",
+		name = "Filter System/Console",
+		description = "When enabled, hides plugin-generated console and unknown system messages",
+		position = 27,
+		section = "system"
+	)
+	default boolean filterSystemConsole()
+	{
+		return true;
 	}
 }
 
