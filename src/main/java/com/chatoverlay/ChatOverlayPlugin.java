@@ -24,6 +24,7 @@ import java.awt.event.KeyEvent;
 import net.runelite.client.util.Text;
 import net.runelite.api.Player;
 import net.runelite.api.widgets.Widget;
+import net.runelite.client.config.Keybind;
 
 @Slf4j
 @PluginDescriptor(
@@ -121,7 +122,8 @@ public class ChatOverlayPlugin extends Plugin
 			@Override
 			public void keyPressed(KeyEvent e)
 			{
-				if (config.peekEnabled() && config.peekKey().matches(e))
+				Keybind keybind = config.peekKey();
+				if (config.peekEnabled() && keybind != null && keybind.matches(e))
 				{
 					peekActive = true;
 				}
@@ -130,7 +132,8 @@ public class ChatOverlayPlugin extends Plugin
 			@Override
 			public void keyReleased(KeyEvent e)
 			{
-				if (config.peekKey().matches(e))
+				Keybind keybind = config.peekKey();
+				if (keybind != null && keybind.matches(e))
 				{
 					peekActive = false;
 				}
@@ -249,7 +252,7 @@ public class ChatOverlayPlugin extends Plugin
 
 			case GAMEMESSAGE: case ENGINE: case SPAM:
 			case BROADCAST: case FRIENDSCHATNOTIFICATION: case FRIENDNOTIFICATION:
-			case LOGINLOGOUTNOTIFICATION: case WELCOME:
+			case LOGINLOGOUTNOTIFICATION: case WELCOME: case CONSOLE: case UNKNOWN:
 				handleSystemMessage(event.getMessageNode(), type, rawMsg, lower);
 				break;
 
@@ -318,6 +321,8 @@ public class ChatOverlayPlugin extends Plugin
 		{
 			case GAMEMESSAGE:
 			case ENGINE:
+			case CONSOLE:
+			case UNKNOWN:
 			{
 				if (gameFilter == 2) return; // Off
 				addSystemLine(messageNode, rawMsg, type, true);

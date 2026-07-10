@@ -161,6 +161,8 @@ public class ChatColorResolver
 
 			case GAMEMESSAGE:
 			case ENGINE:
+			case CONSOLE:
+			case UNKNOWN:
 				return t ? cc.transparentGameMessage() : cc.opaqueGameMessage();
 
 			case SPAM:
