@@ -277,30 +277,32 @@ public class BubbleRenderer
 				}
 
 				java.awt.image.BufferedImage img = new java.awt.image.BufferedImage(
-					nativeW + 2, nativeH + 2, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+					nativeW + 4, nativeH + 4, java.awt.image.BufferedImage.TYPE_INT_ARGB);
 				Graphics2D g2d = img.createGraphics();
 				g2d.setFont(nativeFont);
 				g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
 				g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
 
 				// Render onto the image
-				renderSegmentsDirectly(g2d, segments, 0, nativeFm.getAscent(), nativeFm, nativeW + 2);
+				renderSegmentsDirectly(g2d, segments, 2, nativeFm.getAscent() + 2, nativeFm, nativeW + 4);
 				g2d.dispose();
 
 				// Scale and draw to main graphics context using integer factors
-				int scaledW = (nativeW + 2) * scale;
-				int scaledH = (nativeH + 2) * scale;
+				int scaledW = (nativeW + 4) * scale;
+				int scaledH = (nativeH + 4) * scale;
 				int topY = y - nativeFm.getAscent() * scale;
+				int drawX = x - 2 * scale;
+				int drawY = topY - 2 * scale;
 
 				Object oldInterpolation = graphics.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
 				graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-				graphics.drawImage(img, x, topY, scaledW, scaledH, null);
+				graphics.drawImage(img, drawX, drawY, scaledW, scaledH, null);
 				if (oldInterpolation != null)
 				{
 					graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, oldInterpolation);
 				}
 
-				return x + scaledW;
+				return x + nativeW * scale;
 			}
 		}
 
@@ -351,10 +353,14 @@ public class BubbleRenderer
 			drawBackgroundPass(graphics, segments, x, y, fm, maxX, 1, 0);
 			drawBackgroundPass(graphics, segments, x, y, fm, maxX, 0, -1);
 			drawBackgroundPass(graphics, segments, x, y, fm, maxX, 0, 1);
-			drawBackgroundPass(graphics, segments, x, y, fm, maxX, -1, -1);
-			drawBackgroundPass(graphics, segments, x, y, fm, maxX, 1, -1);
-			drawBackgroundPass(graphics, segments, x, y, fm, maxX, -1, 1);
-			drawBackgroundPass(graphics, segments, x, y, fm, maxX, 1, 1);
+			
+			if (config.fontType() != FontType.RUNESCAPE_SMALL)
+			{
+				drawBackgroundPass(graphics, segments, x, y, fm, maxX, -1, -1);
+				drawBackgroundPass(graphics, segments, x, y, fm, maxX, 1, -1);
+				drawBackgroundPass(graphics, segments, x, y, fm, maxX, -1, 1);
+				drawBackgroundPass(graphics, segments, x, y, fm, maxX, 1, 1);
+			}
 		}
 
 		if (style == TextStyle.SHADOW || style == TextStyle.SHADOW_BOLD || style == TextStyle.OUTLINE_SHADOW)
