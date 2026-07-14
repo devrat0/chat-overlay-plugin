@@ -64,6 +64,10 @@ public class GameOverlay extends Overlay
 		List<ChatLine> alerts = new java.util.ArrayList<>();
 		for (ChatLine alert : allAlerts)
 		{
+			if (!plugin.shouldShowMessage(alert))
+			{
+				continue;
+			}
 			if (config.filterSystemConsole() &&
 				(alert.getChatMessageType() == net.runelite.api.ChatMessageType.CONSOLE ||
 				 alert.getChatMessageType() == net.runelite.api.ChatMessageType.UNKNOWN))

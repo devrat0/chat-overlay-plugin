@@ -61,7 +61,15 @@ public class PrivateChatOverlay extends Overlay
 			return null;
 		}
 
-		List<ChatLine> messages = plugin.getMessageManager().getPrivateMessages();
+		List<ChatLine> allMessages = plugin.getMessageManager().getPrivateMessages();
+		List<ChatLine> messages = new java.util.ArrayList<>();
+		for (ChatLine line : allMessages)
+		{
+			if (plugin.shouldShowMessage(line))
+			{
+				messages.add(line);
+			}
+		}
 		if (messages.isEmpty())
 		{
 			return null;

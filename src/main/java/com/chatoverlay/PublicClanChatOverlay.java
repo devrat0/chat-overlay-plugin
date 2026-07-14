@@ -51,6 +51,10 @@ public class PublicClanChatOverlay extends Overlay
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
+		if (!config.showPublicChat())
+		{
+			return null;
+		}
 		if (config.publicHideWhenChatboxOpen() && plugin.isChatboxOpen())
 		{
 			return null;
@@ -60,6 +64,10 @@ public class PublicClanChatOverlay extends Overlay
 		List<ChatLine> messages = new java.util.ArrayList<>();
 		for (ChatLine line : allMessages)
 		{
+			if (!plugin.shouldShowMessage(line))
+			{
+				continue;
+			}
 			boolean keep = false;
 			switch (line.getCategory())
 			{

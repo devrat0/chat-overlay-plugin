@@ -58,6 +58,9 @@ public class ClanChatOverlay extends Overlay {
         List<ChatLine> allMessages = plugin.getMessageManager().getClanMessages();
         List<ChatLine> messages = new java.util.ArrayList<>();
         for (ChatLine line : allMessages) {
+            if (!plugin.shouldShowMessage(line)) {
+                continue;
+            }
             boolean keep = false;
             if (line.getCategory() == ChatCategory.FRIENDS_CHAT) {
                 keep = config.clanShowFriendsChat();

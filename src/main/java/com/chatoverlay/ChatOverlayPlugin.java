@@ -10,8 +10,12 @@ import net.runelite.api.VarClientStr;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.MenuOptionClicked;
+import net.runelite.api.events.MenuOpened;
+import net.runelite.api.MenuAction;
+import net.runelite.api.MenuEntry;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.VarbitID;
+import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
@@ -38,6 +42,7 @@ public class ChatOverlayPlugin extends Plugin
 {
 	@Inject private Client              client;
 	@Inject private ChatOverlayConfig   config;
+	@Inject private ConfigManager       configManager;
 	@Inject private OverlayManager      overlayManager;
 	@Inject private KeyManager          keyManager;
 	@Inject private PublicClanChatOverlay publicClanOverlay;
@@ -222,7 +227,38 @@ public class ChatOverlayPlugin extends Plugin
 	@Subscribe
 	public void onMenuOptionClicked(MenuOptionClicked event)
 	{
-		if (!event.getMenuOption().endsWith("Clear history"))
+		String option = event.getMenuOption();
+		if ("Chat Overlay: Show".equals(option) || "Chat Overlay: Hide".equals(option))
+		{
+			String target = event.getMenuTarget();
+			boolean enable = "Chat Overlay: Show".equals(option);
+			String configKey = null;
+
+			if (target.contains("Game"))
+			{
+				configKey = "showSystemAlerts";
+			}
+			else if (target.contains("Public"))
+			{
+				configKey = "showPublicChat";
+			}
+			else if (target.contains("Private"))
+			{
+				configKey = "showPrivateChat";
+			}
+			else if (target.contains("Clan"))
+			{
+				configKey = "showClanChatOverlay";
+			}
+
+			if (configKey != null)
+			{
+				configManager.setConfiguration("chatoverlay", configKey, enable);
+			}
+			return;
+		}
+
+		if (!option.endsWith("Clear history"))
 		{
 			return;
 		}
@@ -243,6 +279,85 @@ public class ChatOverlayPlugin extends Plugin
 			rebuildHighlightPatterns();
 		}
 	}
+
+	@Subscribe
+	public void onMenuOpened(MenuOpened event)
+	{
+		MenuEntry[] menuEntries = client.getMenuEntries();
+		if (menuEntries == null || menuEntries.length == 0)
+		{
+			return;
+		}
+
+		MenuEntry tabEntry = null;
+		String tabName = null;
+		for (MenuEntry entry : menuEntries)
+		{
+			String opt = entry.getOption();
+			if (opt == null)
+			{
+				continue;
+			}
+			if (opt.startsWith("<col=ffff00>Game:</col>"))
+			{
+				tabEntry = entry;
+				tabName = "Game";
+				break;
+			}
+			if (opt.startsWith("<col=ffff00>Public:</col>"))
+			{
+				tabEntry = entry;
+				tabName = "Public";
+				break;
+			}
+			if (opt.startsWith("<col=ffff00>Private:</col>"))
+			{
+				tabEntry = entry;
+				tabName = "Private";
+				break;
+			}
+			if (opt.startsWith("<col=ffff00>Clan:</col>"))
+			{
+				tabEntry = entry;
+				tabName = "Clan";
+				break;
+			}
+		}
+
+		if (tabEntry == null || tabName == null)
+		{
+			return;
+		}
+
+		boolean currentValue = false;
+		if ("Game".equals(tabName))
+		{
+			currentValue = config.showSystemAlerts();
+		}
+		else if ("Public".equals(tabName))
+		{
+			currentValue = config.showPublicChat();
+		}
+		else if ("Private".equals(tabName))
+		{
+			currentValue = config.showPrivateChat();
+		}
+		else if ("Clan".equals(tabName))
+		{
+			currentValue = config.showClanChatOverlay();
+		}
+
+		String option = currentValue ? "Chat Overlay: Hide" : "Chat Overlay: Show";
+
+		client.createMenuEntry(-1)
+			.setOption(option)
+			.setTarget("<col=ffff00>" + tabName + "</col>")
+			.setType(MenuAction.RUNELITE)
+			.setParam0(tabEntry.getParam0())
+			.setParam1(tabEntry.getParam1());
+	}
+
+
 
 	/**
 	 * Priority -1 runs AFTER RuneLite's ChatColorPlugin (priority 0), which
@@ -537,5 +652,174 @@ public class ChatOverlayPlugin extends Plugin
 		}
 
 		return sb.toString();
+	}
+
+	private enum ChatFilterState
+	{
+		ON, FRIENDS, OFF, HIDE, FILTERED
+	}
+
+	private ChatFilterState getFilterState(int childId)
+	{
+		Widget w = client.getWidget(162, childId);
+		if (w == null)
+		{
+			return ChatFilterState.ON;
+		}
+		String text = w.getText();
+		if (text == null)
+		{
+			return ChatFilterState.ON;
+		}
+		String lowerText = text.toLowerCase();
+		if (lowerText.contains("off"))
+		{
+			return ChatFilterState.OFF;
+		}
+		if (lowerText.contains("hide"))
+		{
+			return ChatFilterState.HIDE;
+		}
+		if (lowerText.contains("friends"))
+		{
+			return ChatFilterState.FRIENDS;
+		}
+		if (lowerText.contains("filter"))
+		{
+			return ChatFilterState.FILTERED;
+		}
+		return ChatFilterState.ON;
+	}
+
+	public boolean shouldShowMessage(ChatLine line)
+	{
+		if (line == null)
+		{
+			return false;
+		}
+
+		ChatCategory category = line.getCategory();
+		if (category == null)
+		{
+			return true;
+		}
+
+		String localPlayerName = getLocalPlayerName();
+
+		switch (category)
+		{
+			case PUBLIC:
+			{
+				ChatFilterState state = getFilterState(14);
+				if (state == ChatFilterState.OFF || state == ChatFilterState.HIDE)
+				{
+					return false;
+				}
+				if (state == ChatFilterState.FRIENDS)
+				{
+					String sender = normalizeName(line.getSender());
+					if (localPlayerName != null && normalizeName(localPlayerName).equalsIgnoreCase(sender))
+					{
+						return true;
+					}
+					return client.isFriended(sender, false);
+				}
+				break;
+			}
+			case PRIVATE:
+			{
+				ChatFilterState state = getFilterState(18);
+				if (state == ChatFilterState.OFF)
+				{
+					return false;
+				}
+				if (state == ChatFilterState.FRIENDS)
+				{
+					String sender = line.getSender();
+					if (sender.startsWith("From "))
+					{
+						sender = sender.substring(5);
+					}
+					else if (sender.startsWith("To "))
+					{
+						sender = sender.substring(3);
+					}
+					sender = normalizeName(sender);
+
+					if (localPlayerName != null && normalizeName(localPlayerName).equalsIgnoreCase(sender))
+					{
+						return true;
+					}
+					if (line.getChatMessageType() == ChatMessageType.PRIVATECHATOUT)
+					{
+						return true;
+					}
+					return client.isFriended(sender, false);
+				}
+				break;
+			}
+			case CLAN:
+			{
+				ChatFilterState state = getFilterState(26);
+				if (state == ChatFilterState.OFF)
+				{
+					return false;
+				}
+				if (state == ChatFilterState.FRIENDS)
+				{
+					String sender = normalizeName(line.getSender());
+					if (localPlayerName != null && normalizeName(localPlayerName).equalsIgnoreCase(sender))
+					{
+						return true;
+					}
+					return client.isFriended(sender, false);
+				}
+				break;
+			}
+			case FRIENDS_CHAT:
+			{
+				ChatFilterState state = getFilterState(22);
+				if (state == ChatFilterState.OFF)
+				{
+					return false;
+				}
+				if (state == ChatFilterState.FRIENDS)
+				{
+					String sender = normalizeName(line.getSender());
+					if (localPlayerName != null && normalizeName(localPlayerName).equalsIgnoreCase(sender))
+					{
+						return true;
+					}
+					return client.isFriended(sender, false);
+				}
+				break;
+			}
+			case SYSTEM:
+			{
+				ChatFilterState state = getFilterState(10);
+				if (state == ChatFilterState.OFF)
+				{
+					return false;
+				}
+				if (state == ChatFilterState.FILTERED)
+				{
+					if (line.getChatMessageType() == ChatMessageType.SPAM)
+					{
+						return false;
+					}
+				}
+				break;
+			}
+		}
+		return true;
+	}
+
+	private String normalizeName(String name)
+	{
+		if (name == null)
+		{
+			return "";
+		}
+		return Text.removeTags(name).replace('\u00a0', ' ').trim();
 	}
 }
