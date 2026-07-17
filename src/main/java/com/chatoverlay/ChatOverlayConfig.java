@@ -327,10 +327,22 @@ public interface ChatOverlayConfig extends Config
 	// ──────────────────────────────────────────────
 
 	@ConfigItem(
+		keyName = "showMainChatOverlay",
+		name = "Show Main Chat Overlay",
+		description = "Display the main chat overlay (bottom-left)",
+		position = 0,
+		section = "publicClan"
+	)
+	default boolean showMainChatOverlay()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "showPublicChat",
 		name = "Show Public Chat",
 		description = "Display public chat messages",
-		position = 0,
+		position = 1,
 		section = "publicClan"
 	)
 	default boolean showPublicChat()
@@ -342,7 +354,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "showClanChat",
 		name = "Show Clan Chat",
 		description = "Display clan chat messages",
-		position = 1,
+		position = 2,
 		section = "publicClan"
 	)
 	default boolean showClanChat()
@@ -354,7 +366,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "showFriendsChat",
 		name = "Show Friends Chat",
 		description = "Display friends chat (FC) messages",
-		position = 2,
+		position = 3,
 		section = "publicClan"
 	)
 	default boolean showFriendsChat()
@@ -366,7 +378,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "showPrivateChatInMain",
 		name = "Show Private Chat",
 		description = "Include private messages in this overlay",
-		position = 3,
+		position = 4,
 		section = "publicClan"
 	)
 	default boolean showPrivateChatInMain()
@@ -379,7 +391,7 @@ public interface ChatOverlayConfig extends Config
 		name = "Show Game Chat",
 		description = "Also route game/system messages (GAMEMESSAGE, ENGINE, BROADCAST, WELCOME) into this main chat overlay. "
 			+ "Off by default — the dedicated Game Chat overlay already handles them.",
-		position = 4,
+		position = 5,
 		section = "publicClan"
 	)
 	default boolean showGameMessagesInMain()
@@ -391,7 +403,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "publicHideWhenChatboxOpen",
 		name = "Hide When Chatbox Visible",
 		description = "Hide this overlay while the in-game chatbox is visible on screen",
-		position = 5,
+		position = 6,
 		section = "publicClan"
 	)
 	default boolean publicHideWhenChatboxOpen()

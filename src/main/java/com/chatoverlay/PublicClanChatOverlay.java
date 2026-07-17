@@ -51,7 +51,7 @@ public class PublicClanChatOverlay extends Overlay
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
-		if (!config.showPublicChat())
+		if (!config.showMainChatOverlay())
 		{
 			return null;
 		}

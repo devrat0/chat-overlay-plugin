@@ -238,9 +238,9 @@ public class ChatOverlayPlugin extends Plugin
 			{
 				configKey = "showSystemAlerts";
 			}
-			else if (target.contains("Public"))
+			else if (target.contains("Main Chat"))
 			{
-				configKey = "showPublicChat";
+				configKey = "showMainChatOverlay";
 			}
 			else if (target.contains("Private"))
 			{
@@ -293,6 +293,13 @@ public class ChatOverlayPlugin extends Plugin
 		String tabName = null;
 		for (MenuEntry entry : menuEntries)
 		{
+			if (entry.getParam1() == InterfaceID.Chatbox.CHAT_ALL)
+			{
+				tabEntry = entry;
+				tabName = "All";
+				break;
+			}
+
 			String opt = entry.getOption();
 			if (opt == null)
 			{
@@ -302,12 +309,6 @@ public class ChatOverlayPlugin extends Plugin
 			{
 				tabEntry = entry;
 				tabName = "Game";
-				break;
-			}
-			if (opt.startsWith("<col=ffff00>Public:</col>"))
-			{
-				tabEntry = entry;
-				tabName = "Public";
 				break;
 			}
 			if (opt.startsWith("<col=ffff00>Private:</col>"))
@@ -334,9 +335,9 @@ public class ChatOverlayPlugin extends Plugin
 		{
 			currentValue = config.showSystemAlerts();
 		}
-		else if ("Public".equals(tabName))
+		else if ("All".equals(tabName))
 		{
-			currentValue = config.showPublicChat();
+			currentValue = config.showMainChatOverlay();
 		}
 		else if ("Private".equals(tabName))
 		{
@@ -351,7 +352,7 @@ public class ChatOverlayPlugin extends Plugin
 
 		client.createMenuEntry(-1)
 			.setOption(option)
-			.setTarget("<col=ffff00>" + tabName + "</col>")
+			.setTarget("<col=ffff00>" + ("All".equals(tabName) ? "Main Chat" : tabName) + "</col>")
 			.setType(MenuAction.RUNELITE)
 			.setParam0(tabEntry.getParam0())
 			.setParam1(tabEntry.getParam1());
