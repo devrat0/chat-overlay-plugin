@@ -317,10 +317,21 @@ public class PrivateChatOverlay extends Overlay
 				graphics.drawString(timestampStr, x + 1, textY + 1);
 			}
 
-			if (style == TextStyle.SHADOW || style == TextStyle.SHADOW_BOLD || style == TextStyle.OUTLINE_SHADOW)
+			if (style == TextStyle.SHADOW || style == TextStyle.OUTLINE_SHADOW)
 			{
 				graphics.setColor(black);
 				graphics.drawString(timestampStr, x + 1, textY + 1);
+			}
+			else if (style == TextStyle.SHADOW_BOLD)
+			{
+				graphics.setColor(black);
+				graphics.drawString(timestampStr, x - 1, textY);
+				graphics.drawString(timestampStr, x + 1, textY);
+				graphics.drawString(timestampStr, x, textY - 1);
+				graphics.drawString(timestampStr, x, textY + 1);
+				graphics.drawString(timestampStr, x + 1, textY + 1);
+				graphics.drawString(timestampStr, x + 1, textY + 2);
+				graphics.drawString(timestampStr, x + 2, textY + 1);
 			}
 
 			graphics.setColor(tc);

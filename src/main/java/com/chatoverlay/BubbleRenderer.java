@@ -57,40 +57,35 @@ public class BubbleRenderer
 	public Font resolveFont()
 	{
 		Font base;
-		boolean isShadowBold = config.textStyle() == TextStyle.SHADOW_BOLD;
 
 		switch (config.fontType())
 		{
 			case RUNESCAPE:
-				base = isShadowBold ? FontManager.getRunescapeBoldFont() : FontManager.getRunescapeFont();
+				base = FontManager.getRunescapeFont();
 				break;
 			case RUNESCAPE_SMALL:
 				base = FontManager.getRunescapeSmallFont();
-				if (isShadowBold)
-				{
-					base = base.deriveFont(Font.BOLD);
-				}
 				break;
 			case RUNESCAPE_BOLD:
 				base = FontManager.getRunescapeBoldFont();
 				break;
 			case ARIAL:
-				base = new Font("Arial", isShadowBold ? Font.BOLD : Font.PLAIN, config.fontSize());
+				base = new Font("Arial", Font.PLAIN, config.fontSize());
 				break;
 			case DIALOG:
-				base = new Font(Font.DIALOG, isShadowBold ? Font.BOLD : Font.PLAIN, config.fontSize());
+				base = new Font(Font.DIALOG, Font.PLAIN, config.fontSize());
 				break;
 			case SANS_SERIF:
-				base = new Font(Font.SANS_SERIF, isShadowBold ? Font.BOLD : Font.PLAIN, config.fontSize());
+				base = new Font(Font.SANS_SERIF, Font.PLAIN, config.fontSize());
 				break;
 			case SERIF:
-				base = new Font(Font.SERIF, isShadowBold ? Font.BOLD : Font.PLAIN, config.fontSize());
+				base = new Font(Font.SERIF, Font.PLAIN, config.fontSize());
 				break;
 			case MONOSPACED:
-				base = new Font(Font.MONOSPACED, isShadowBold ? Font.BOLD : Font.PLAIN, config.fontSize());
+				base = new Font(Font.MONOSPACED, Font.PLAIN, config.fontSize());
 				break;
 			case CUSTOM:
-				base = new Font(config.customFontName(), isShadowBold ? Font.BOLD : Font.PLAIN, config.fontSize());
+				base = new Font(config.customFontName(), Font.PLAIN, config.fontSize());
 				break;
 			default:
 				base = FontManager.getRunescapeBoldFont();
@@ -363,9 +358,20 @@ public class BubbleRenderer
 			}
 		}
 
-		if (style == TextStyle.SHADOW || style == TextStyle.SHADOW_BOLD || style == TextStyle.OUTLINE_SHADOW)
+		if (style == TextStyle.SHADOW || style == TextStyle.OUTLINE_SHADOW)
 		{
 			drawBackgroundPass(graphics, segments, x, y, fm, maxX, 1, 1);
+		}
+		else if (style == TextStyle.SHADOW_BOLD)
+		{
+			// Better NPC Highlight "Debug NPC Info" outline-based text styling
+			drawBackgroundPass(graphics, segments, x, y, fm, maxX, -1, 0);
+			drawBackgroundPass(graphics, segments, x, y, fm, maxX, 1, 0);
+			drawBackgroundPass(graphics, segments, x, y, fm, maxX, 0, -1);
+			drawBackgroundPass(graphics, segments, x, y, fm, maxX, 0, 1);
+			drawBackgroundPass(graphics, segments, x, y, fm, maxX, 1, 1);
+			drawBackgroundPass(graphics, segments, x, y, fm, maxX, 1, 2);
+			drawBackgroundPass(graphics, segments, x, y, fm, maxX, 2, 1);
 		}
 
 		// Main pass
