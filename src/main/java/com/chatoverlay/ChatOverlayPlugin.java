@@ -98,6 +98,87 @@ public class ChatOverlayPlugin extends Plugin
 		}
 	}
 
+	@Inject private net.runelite.client.game.ChatIconManager chatIconManager;
+
+	public int getFriendsChatRankIconIndex(String sender)
+	{
+		if (sender == null || sender.isEmpty())
+		{
+			return -1;
+		}
+		try
+		{
+			net.runelite.api.FriendsChatManager fcm = client.getFriendsChatManager();
+			if (fcm == null)
+			{
+				return -1;
+			}
+			net.runelite.api.FriendsChatMember member = fcm.findByName(sender);
+			if (member == null)
+			{
+				return -1;
+			}
+			net.runelite.api.FriendsChatRank rank = member.getRank();
+			if (rank == null || rank == net.runelite.api.FriendsChatRank.UNRANKED)
+			{
+				return -1;
+			}
+			return chatIconManager.getIconNumber(rank);
+		}
+		catch (Exception e)
+		{
+			return -1;
+		}
+	}
+
+	public int getClanRankIconIndex(String sender, boolean isGuest)
+	{
+		if (sender == null || sender.isEmpty())
+		{
+			return -1;
+		}
+		try
+		{
+			net.runelite.api.clan.ClanChannel channel = isGuest ? client.getGuestClanChannel() : client.getClanChannel();
+			net.runelite.api.clan.ClanSettings settings = isGuest ? client.getGuestClanSettings() : client.getClanSettings();
+
+			net.runelite.api.clan.ClanRank rank = null;
+			if (channel != null)
+			{
+				net.runelite.api.clan.ClanChannelMember member = channel.findMember(sender);
+				if (member != null)
+				{
+					rank = member.getRank();
+				}
+			}
+			if (rank == null && settings != null)
+			{
+				net.runelite.api.clan.ClanMember member = settings.findMember(sender);
+				if (member != null)
+				{
+					rank = member.getRank();
+				}
+			}
+
+			if (rank == null || settings == null)
+			{
+				return -1;
+			}
+
+			net.runelite.api.clan.ClanTitle title = settings.titleForRank(rank);
+			if (title == null)
+			{
+				return -1;
+			}
+
+			return chatIconManager.getIconNumber(title);
+		}
+		catch (Exception e)
+		{
+			return -1;
+		}
+	}
+
 	public String getChatboxTypedText()
 	{
 		try
@@ -384,6 +465,25 @@ public class ChatOverlayPlugin extends Plugin
 						rawSenderName = "<img=" + iconIdx + ">" + rawSenderName;
 					}
 				}
+			}
+
+			int rankIconIdx = -1;
+			if (type == ChatMessageType.FRIENDSCHAT)
+			{
+				rankIconIdx = getFriendsChatRankIconIndex(sender);
+			}
+			else if (type == ChatMessageType.CLAN_CHAT || type == ChatMessageType.CLAN_GIM_CHAT || type == ChatMessageType.CLAN_MESSAGE)
+			{
+				rankIconIdx = getClanRankIconIndex(sender, false);
+			}
+			else if (type == ChatMessageType.CLAN_GUEST_CHAT || type == ChatMessageType.CLAN_GUEST_MESSAGE)
+			{
+				rankIconIdx = getClanRankIconIndex(sender, true);
+			}
+
+			if (rankIconIdx != -1 && !rawSenderName.contains("<img=" + rankIconIdx + ">"))
+			{
+				rawSenderName = "<img=" + rankIconIdx + ">" + rawSenderName;
 			}
 		}
 

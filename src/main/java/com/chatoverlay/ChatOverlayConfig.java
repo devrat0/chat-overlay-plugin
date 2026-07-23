@@ -209,7 +209,7 @@ public interface ChatOverlayConfig extends Config
 	@ConfigItem(
 		keyName = "showPlayerIcons",
 		name = "Show Player Icons",
-		description = "Display Ironman and J-Mod crown icons next to sender names in chat bubbles",
+		description = "Display Ironman, J-Mod, Clan, and Friends Chat rank icons next to sender names in chat bubbles",
 		position = 11,
 		section = "general"
 	)
