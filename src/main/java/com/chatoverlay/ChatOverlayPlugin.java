@@ -17,6 +17,7 @@ import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.client.config.ConfigManager;
+import net.runelite.client.plugins.chatfilter.ChatFilterConfig;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.input.KeyManager;
@@ -359,6 +360,23 @@ public class ChatOverlayPlugin extends Plugin
 		{
 			rebuildHighlightPatterns();
 		}
+		else if (event.getGroup().equals("chatfilter"))
+		{
+			if ("collapseGameChat".equals(event.getKey()))
+			{
+				if (isCollapseGameChat())
+				{
+					messageManager.collapseSystemMessages();
+				}
+			}
+			else if ("collapsePlayerChat".equals(event.getKey()))
+			{
+				if (isCollapsePlayerChat())
+				{
+					messageManager.collapsePlayerMessages();
+				}
+			}
+		}
 	}
 
 	@Subscribe
@@ -520,12 +538,44 @@ public class ChatOverlayPlugin extends Plugin
 		}
 	}
 
+	public boolean isCollapseGameChat()
+	{
+		try
+		{
+			ChatFilterConfig chatFilterConfig = configManager.getConfig(ChatFilterConfig.class);
+			if (chatFilterConfig != null)
+			{
+				return chatFilterConfig.collapseGameChat();
+			}
+		}
+		catch (Exception ignored) {}
+
+		Boolean val = configManager.getConfiguration("chatfilter", "collapseGameChat", Boolean.class);
+		return val != null && val;
+	}
+
+	public boolean isCollapsePlayerChat()
+	{
+		try
+		{
+			ChatFilterConfig chatFilterConfig = configManager.getConfig(ChatFilterConfig.class);
+			if (chatFilterConfig != null)
+			{
+				return chatFilterConfig.collapsePlayerChat();
+			}
+		}
+		catch (Exception ignored) {}
+
+		Boolean val = configManager.getConfiguration("chatfilter", "collapsePlayerChat", Boolean.class);
+		return val != null && val;
+	}
+
 	// ── onChatMessage handlers ─────────────────────────────────────────────
 
 	private void handlePublicChat(net.runelite.api.MessageNode messageNode, ChatMessageType type, String sender, String rawSenderName, String rawMsg)
 	{
 		ChatLine line = new ChatLine(messageNode, sender, rawSenderName, rawMsg, ChatCategory.PUBLIC, type);
-		messageManager.addPublicClanMessage(line, 100);
+		messageManager.addPublicClanMessage(line, 100, isCollapsePlayerChat());
 	}
 
 	private void handleClanChat(net.runelite.api.MessageNode messageNode, ChatMessageType type, String sender, String rawSenderName, String rawMsg)
@@ -542,16 +592,16 @@ public class ChatOverlayPlugin extends Plugin
 				break;
 		}
 		ChatLine line = new ChatLine(messageNode, sender, rawSenderName, rawMsg, ChatCategory.CLAN, type, channelName);
-		messageManager.addPublicClanMessage(line, 100);
-		messageManager.addClanMessage(line, 100);
+		messageManager.addPublicClanMessage(line, 100, isCollapsePlayerChat());
+		messageManager.addClanMessage(line, 100, isCollapsePlayerChat());
 	}
 
 	private void handleFriendsChat(net.runelite.api.MessageNode messageNode, String sender, String rawSenderName, String rawMsg)
 	{
 		ChatLine line = new ChatLine(messageNode, sender, rawSenderName, rawMsg,
 			ChatCategory.FRIENDS_CHAT, ChatMessageType.FRIENDSCHAT, channelNames.getFriendsChatName());
-		messageManager.addPublicClanMessage(line, 100);
-		messageManager.addClanMessage(line, 100);
+		messageManager.addPublicClanMessage(line, 100, isCollapsePlayerChat());
+		messageManager.addClanMessage(line, 100, isCollapsePlayerChat());
 	}
 
 	private void handlePrivateChat(net.runelite.api.MessageNode messageNode, ChatMessageType type, String sender, String rawSenderName, String rawMsg)
@@ -559,8 +609,8 @@ public class ChatOverlayPlugin extends Plugin
 		boolean incoming = type != ChatMessageType.PRIVATECHATOUT;
 		String prefix    = incoming ? "From " : "To ";
 		ChatLine line    = new ChatLine(messageNode, prefix + sender, prefix + rawSenderName, rawMsg, ChatCategory.PRIVATE, type);
-		messageManager.addPrivateMessage(line, 100);
-		messageManager.addPublicClanMessage(line, 100);
+		messageManager.addPrivateMessage(line, 100, isCollapsePlayerChat());
+		messageManager.addPublicClanMessage(line, 100, isCollapsePlayerChat());
 	}
 
 	public boolean isSystemMessageFiltered(String lower)
@@ -596,8 +646,8 @@ public class ChatOverlayPlugin extends Plugin
 			case BROADCAST:
 			{
 				ChatLine line = new ChatLine(messageNode, null, null, rawMsg, ChatCategory.SYSTEM, type);
-				messageManager.addSystemMessage(line, 100, false, 0L);
-				messageManager.addPublicClanMessage(line, 100);
+				messageManager.addSystemMessage(line, 100, false, 0L, isCollapseGameChat());
+				messageManager.addPublicClanMessage(line, 100, isCollapseGameChat());
 				break;
 			}
 			case FRIENDSCHATNOTIFICATION:
@@ -605,18 +655,18 @@ public class ChatOverlayPlugin extends Plugin
 			case LOGINLOGOUTNOTIFICATION:
 			{
 				ChatLine line = new ChatLine(messageNode, null, null, rawMsg, ChatCategory.SYSTEM, type);
-				boolean added = messageManager.addSystemMessage(line, 100, config.filterSpamAlerts(), config.spamCooldownSeconds() * 1000L);
+				boolean added = messageManager.addSystemMessage(line, 100, config.filterSpamAlerts(), config.spamCooldownSeconds() * 1000L, isCollapseGameChat());
 				if (added)
 				{
-					messageManager.addPublicClanMessage(line, 100);
+					messageManager.addPublicClanMessage(line, 100, isCollapseGameChat());
 				}
 				break;
 			}
 			case WELCOME:
 			{
 				ChatLine line = new ChatLine(messageNode, null, null, rawMsg, ChatCategory.SYSTEM, type);
-				messageManager.addSystemMessage(line, 100, false, 0L);
-				messageManager.addPublicClanMessage(line, 100);
+				messageManager.addSystemMessage(line, 100, false, 0L, isCollapseGameChat());
+				messageManager.addPublicClanMessage(line, 100, isCollapseGameChat());
 				break;
 			}
 			default:
@@ -629,10 +679,10 @@ public class ChatOverlayPlugin extends Plugin
 	{
 		ChatLine line = new ChatLine(messageNode, null, null, rawMsg, ChatCategory.SYSTEM, type);
 		boolean added = messageManager.addSystemMessage(line, 100,
-			useFilter && config.filterSpamAlerts(), config.spamCooldownSeconds() * 1000L);
+			useFilter && config.filterSpamAlerts(), config.spamCooldownSeconds() * 1000L, isCollapseGameChat());
 		if (added)
 		{
-			messageManager.addPublicClanMessage(line, 100);
+			messageManager.addPublicClanMessage(line, 100, isCollapseGameChat());
 		}
 	}
 

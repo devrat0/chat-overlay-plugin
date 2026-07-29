@@ -483,6 +483,10 @@ public class GameOverlay extends Overlay
 			builder.append(timestampStr, customTimestampColor);
 		}
 		builder.append(alert.getRawMessage());
+		if (alert.getCount() > 1)
+		{
+			builder.append(" (" + alert.getCount() + ")");
+		}
 		return new AlertContent(
 			builder.toPlainString(),
 			renderer.applyAlphaToSegments(builder.getSegments(), alpha));

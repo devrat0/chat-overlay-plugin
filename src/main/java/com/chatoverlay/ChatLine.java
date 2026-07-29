@@ -20,7 +20,8 @@ public class ChatLine
 	private final String sender;
 	private final String rawSender;
 	private final String rawMessage;
-	private final long timestamp;
+	private volatile long timestamp;
+	private volatile int count = 1;
 	private final ChatCategory category;
 	private final ChatMessageType chatMessageType;
 	private final MessageNode messageNode;
@@ -163,6 +164,31 @@ public class ChatLine
 	public boolean isPruned()
 	{
 		return pruneTimestamp > 0;
+	}
+
+	public int getCount()
+	{
+		return count;
+	}
+
+	public void setCount(int count)
+	{
+		this.count = count;
+	}
+
+	public void setTimestamp(long timestamp)
+	{
+		this.timestamp = timestamp;
+	}
+
+	public void updateTimestamp()
+	{
+		this.timestamp = System.currentTimeMillis();
+	}
+
+	public void resetPrune()
+	{
+		this.pruneTimestamp = 0;
 	}
 
 	public long getPruneTimestamp()

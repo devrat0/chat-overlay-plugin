@@ -70,36 +70,173 @@ public class ChatMessageManager
 		return new ArrayList<>(queue);
 	}
 
+	private boolean isSameMessage(ChatLine m1, ChatLine m2, boolean isGameChat)
+	{
+		if (m1 == null || m2 == null)
+		{
+			return false;
+		}
+
+		String msg1 = m1.getPlainMessage() != null ? m1.getPlainMessage().trim() : "";
+		String msg2 = m2.getPlainMessage() != null ? m2.getPlainMessage().trim() : "";
+
+		if (!msg1.equalsIgnoreCase(msg2))
+		{
+			return false;
+		}
+
+		if (isGameChat)
+		{
+			return true;
+		}
+
+		String sender1 = m1.getSender() != null ? m1.getSender().trim() : "";
+		String sender2 = m2.getSender() != null ? m2.getSender().trim() : "";
+
+		if (!sender1.equalsIgnoreCase(sender2))
+		{
+			return false;
+		}
+
+		if (m1.getCategory() != m2.getCategory())
+		{
+			return false;
+		}
+
+		return java.util.Objects.equals(m1.getChannelName(), m2.getChannelName());
+	}
+
+	public void collapseQueue(LinkedList<ChatLine> queue, boolean isGameChat)
+	{
+		synchronized (queue)
+		{
+			if (queue.isEmpty())
+			{
+				return;
+			}
+
+			List<ChatLine> copy = new ArrayList<>(queue);
+			queue.clear();
+
+			for (ChatLine line : copy)
+			{
+				List<ChatLine> matches = new ArrayList<>();
+				int existingCount = 0;
+				for (ChatLine existing : queue)
+				{
+					if (isSameMessage(existing, line, isGameChat))
+					{
+						matches.add(existing);
+						existingCount += existing.getCount();
+					}
+				}
+
+				if (!matches.isEmpty())
+				{
+					line.setCount(existingCount + 1);
+					queue.removeAll(matches);
+				}
+				else
+				{
+					line.setCount(1);
+				}
+
+				line.resetPrune();
+				queue.addLast(line);
+			}
+		}
+	}
+
+	public void collapseSystemMessages()
+	{
+		collapseQueue(systemMessages, true);
+		collapseQueue(publicClanMessages, true);
+	}
+
+	public void collapsePlayerMessages()
+	{
+		collapseQueue(publicClanMessages, false);
+		collapseQueue(privateMessages, false);
+		collapseQueue(clanMessages, false);
+	}
+
+	private void addMessageWithCollapsing(LinkedList<ChatLine> queue, ChatLine line, int maxLimit, boolean collapse, boolean isGameChat)
+	{
+		synchronized (queue)
+		{
+			if (collapse)
+			{
+				List<ChatLine> matches = new ArrayList<>();
+				int existingCount = 0;
+				for (ChatLine m : queue)
+				{
+					if (isSameMessage(m, line, isGameChat))
+					{
+						matches.add(m);
+						existingCount += m.getCount();
+					}
+				}
+
+				if (!matches.isEmpty())
+				{
+					line.setCount(existingCount + 1);
+					queue.removeAll(matches);
+				}
+				else
+				{
+					line.setCount(1);
+				}
+			}
+			else
+			{
+				line.setCount(1);
+			}
+
+			line.resetPrune();
+			queue.addLast(line);
+			pruneQueue(queue, maxLimit);
+		}
+	}
+
 	public void addPublicClanMessage(ChatLine line, int maxMessages)
 	{
-		synchronized (publicClanMessages)
-		{
-			publicClanMessages.addLast(line);
-			pruneQueue(publicClanMessages, maxMessages);
-		}
+		addPublicClanMessage(line, maxMessages, false);
+	}
+
+	public void addPublicClanMessage(ChatLine line, int maxMessages, boolean collapse)
+	{
+		boolean isGameChat = line.getCategory() == ChatCategory.SYSTEM;
+		addMessageWithCollapsing(publicClanMessages, line, maxMessages, collapse, isGameChat);
 	}
 
 	public void addPrivateMessage(ChatLine line, int maxMessages)
 	{
-		synchronized (privateMessages)
-		{
-			privateMessages.addLast(line);
-			pruneQueue(privateMessages, maxMessages);
-		}
+		addPrivateMessage(line, maxMessages, false);
+	}
+
+	public void addPrivateMessage(ChatLine line, int maxMessages, boolean collapse)
+	{
+		addMessageWithCollapsing(privateMessages, line, maxMessages, collapse, false);
 	}
 
 	public void addClanMessage(ChatLine line, int maxMessages)
 	{
-		synchronized (clanMessages)
-		{
-			clanMessages.addLast(line);
-			pruneQueue(clanMessages, maxMessages);
-		}
+		addClanMessage(line, maxMessages, false);
+	}
+
+	public void addClanMessage(ChatLine line, int maxMessages, boolean collapse)
+	{
+		addMessageWithCollapsing(clanMessages, line, maxMessages, collapse, false);
 	}
 
 	public boolean addSystemMessage(ChatLine line, int maxAlerts, boolean filterSpam, long spamCooldownMs)
 	{
-		if (filterSpam)
+		return addSystemMessage(line, maxAlerts, filterSpam, spamCooldownMs, false);
+	}
+
+	public boolean addSystemMessage(ChatLine line, int maxAlerts, boolean filterSpam, long spamCooldownMs, boolean collapse)
+	{
+		if (filterSpam && !collapse)
 		{
 			String lower = line.getPlainMessage().toLowerCase().trim();
 			Long lastSeen = recentSystemMessages.get(lower);
@@ -111,11 +248,7 @@ public class ChatMessageManager
 			recentSystemMessages.put(lower, now);
 		}
 
-		synchronized (systemMessages)
-		{
-			systemMessages.addLast(line);
-			pruneQueue(systemMessages, maxAlerts);
-		}
+		addMessageWithCollapsing(systemMessages, line, maxAlerts, collapse, true);
 		return true;
 	}
 

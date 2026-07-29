@@ -148,6 +148,10 @@ public class PrivateChatOverlay extends Overlay
 			builder.append(senderName, customUsernameColor);
 			builder.append(": ");
 			builder.append(line.getRawMessage());
+			if (line.getCount() > 1)
+			{
+				builder.append(" (" + line.getCount() + ")");
+			}
 
 			List<ColorSegment> allSegs    = builder.getSegments();
 			int                innerWidth = maxWidth - paddingX * 2 - timestampWidth;
