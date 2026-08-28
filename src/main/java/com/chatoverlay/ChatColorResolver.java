@@ -30,7 +30,13 @@ public class ChatColorResolver
 
 	public boolean isTransparentChatbox()
 	{
-		return client.isResized()
+		return isTransparentChatbox(client);
+	}
+
+	public static boolean isTransparentChatbox(Client client)
+	{
+		return client != null
+			&& client.isResized()
 			&& client.getVarbitValue(Varbits.TRANSPARENT_CHATBOX) == 1;
 	}
 

@@ -6,12 +6,15 @@ import java.util.regex.Pattern;
  * A utility class for handling OSRS/RuneLite color tags.
  *
  * <p>The primary function of this class is to {@link #stripTags(String)},
- * which removes all {@code <col=...>} and other tags from a string,
- * returning only the plain text.</p>
+ * which removes all {@code <col=...>}, {@code @macro@}, and other tags
+ * from a string, returning only the plain text.</p>
  */
 public class ColorTagParser
 {
-	private static final Pattern ANY_TAG = Pattern.compile("<[^>]+>");
+	private static final Pattern ANY_TAG = Pattern.compile(
+		"<[^>]+>"                 // color tags
+		+ "|@mes_[a-z0-9_]+@",    // color macro tags
+		Pattern.CASE_INSENSITIVE);
 
 	private ColorTagParser() {}
 
