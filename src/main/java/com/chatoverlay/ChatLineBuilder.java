@@ -58,6 +58,7 @@ public class ChatLineBuilder
 			return;
 		}
 
+		rawText = ColorMacroResolver.resolve(rawText, ChatColorResolver.isTransparentChatbox(client));
 		Matcher m = TAG_PATTERN.matcher(rawText);
 		Color currentColor = defaultColor;
 		int lastEnd = 0;
