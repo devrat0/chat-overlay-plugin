@@ -33,7 +33,7 @@ public class ChatLine
 	private final String channelName;
 
 	private static final java.util.regex.Pattern CA_PREFIX_PATTERN =
-		java.util.regex.Pattern.compile("^((?:<[^>]+>)*)CA_ID:(?:<[^>]+>)*\\d+(?:<[^>]+>)*\\|\\s*");
+		java.util.regex.Pattern.compile("^((?:<[^>]+>)*)CA_ID:(?:[^|])*\\|\\s*");
 
 	private static String cleanPrefixes(String msg)
 	{
