@@ -33,7 +33,10 @@ public class ChatLine
 	private final String channelName;
 
 	private static final java.util.regex.Pattern CA_PREFIX_PATTERN =
-		java.util.regex.Pattern.compile("^((?:<[^>]+>)*)CA_ID:(?:[^|])*\\|\\s*");
+		java.util.regex.Pattern.compile("(?i)CA(?:_ID)?\\s*:\\s*[^|]*\\|\\s*");
+
+	private static final java.util.regex.Pattern BROADCAST_SUFFIX_PATTERN =
+		java.util.regex.Pattern.compile("(?i)(?:\\|\\s*(?:\\d+|https?://\\S+|www\\.\\S+)\\s*)+((?:<[^>]+>)*\\s*)$");
 
 	private static String cleanPrefixes(String msg)
 	{
@@ -41,7 +44,8 @@ public class ChatLine
 		{
 			return null;
 		}
-		return CA_PREFIX_PATTERN.matcher(msg).replaceFirst("$1");
+		String cleaned = CA_PREFIX_PATTERN.matcher(msg).replaceAll("");
+		return BROADCAST_SUFFIX_PATTERN.matcher(cleaned).replaceAll("$1");
 	}
 
 
@@ -55,8 +59,8 @@ public class ChatLine
 		String channelName)
 	{
 		this.messageNode = messageNode;
-		this.sender = sender == null ? "" : sender;
-		this.rawSender = rawSender == null ? "" : rawSender;
+		this.sender = sender == null ? "" : cleanPrefixes(sender);
+		this.rawSender = rawSender == null ? "" : cleanPrefixes(rawSender);
 		this.rawMessage = rawMessage == null ? "" : cleanPrefixes(rawMessage);
 		this.timestamp = System.currentTimeMillis();
 		this.category = category;
@@ -83,12 +87,12 @@ public class ChatLine
 
 	public String getSender()
 	{
-		return sender;
+		return cleanPrefixes(sender);
 	}
 
 	public String getRawSender()
 	{
-		return rawSender;
+		return cleanPrefixes(rawSender);
 	}
 
 	public String getRawMessage()
