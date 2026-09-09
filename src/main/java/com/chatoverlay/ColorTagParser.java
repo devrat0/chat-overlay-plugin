@@ -13,7 +13,7 @@ public class ColorTagParser
 {
 	private static final Pattern ANY_TAG = Pattern.compile(
 		"<[^>]+>"                 // color tags
-		+ "|@mes_[a-z0-9_]+@",    // color macro tags
+		+ "|@[a-z0-9_]+@",        // all macro tags
 		Pattern.CASE_INSENSITIVE);
 
 	private ColorTagParser() {}
