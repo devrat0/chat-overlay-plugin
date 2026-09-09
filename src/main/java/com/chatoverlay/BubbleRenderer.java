@@ -122,6 +122,10 @@ public class BubbleRenderer
 	{
 		if (durMs <= 0)
 		{
+			if (line.isPruned())
+			{
+				return Math.max(0f, 1.0f - (float) line.getPruneAge() / 1000f);
+			}
 			return 1.0f;
 		}
 

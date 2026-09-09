@@ -1270,7 +1270,7 @@ public interface ChatOverlayConfig extends Config
 		position = 7,
 		section = "system"
 	)
-	@Range(min = 1, max = 8)
+	@Range(min = 1, max = 50)
 	default int systemMaxAlerts()
 	{
 		return 3;
@@ -1292,11 +1292,11 @@ public interface ChatOverlayConfig extends Config
 	@ConfigItem(
 		keyName = "systemAlertDuration",
 		name = "Message Duration (seconds)",
-		description = "How long each game message stays visible",
+		description = "How long each game message stays visible. Set to 0 to keep messages indefinitely.",
 		position = 9,
 		section = "system"
 	)
-	@Range(min = 1, max = 15)
+	@Range(min = 0, max = 300)
 	default int systemAlertDuration()
 	{
 		return 3;
