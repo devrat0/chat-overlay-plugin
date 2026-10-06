@@ -185,6 +185,11 @@ public class ChatColorResolver
 			case WELCOME:
 				return t ? cc.transparentServerMessage() : cc.opaqueServerMessage();
 
+			case ITEM_EXAMINE:
+			case NPC_EXAMINE:
+			case OBJECT_EXAMINE:
+				return t ? cc.transparentExamine() : cc.opaqueExamine();
+
 			default:
 				return null;
 		}

@@ -256,6 +256,19 @@ public interface ChatOverlayConfig extends Config
 		return 1;
 	}
 
+	@ConfigItem(
+		keyName = "drawBelowInterfaces",
+		name = "Draw Below Game Interfaces",
+		description = "Draw floating chat below bank, shop, trade and other game interfaces. "
+			+ "In fixed mode, chat is clipped to the game viewport. Pinned Game Chat already draws below interfaces.",
+		position = 15,
+		section = "general"
+	)
+	default boolean drawBelowInterfaces()
+	{
+		return false;
+	}
+
 	// ──────────────────────────────────────────────
 	//  KEYWORD HIGHLIGHTING
 	// ──────────────────────────────────────────────

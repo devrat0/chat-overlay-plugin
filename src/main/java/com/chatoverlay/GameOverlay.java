@@ -31,8 +31,6 @@ public class GameOverlay extends Overlay
 	private final BubbleRenderer    renderer;
 	private final ChatColorResolver colorResolver;
 
-	private GameOverlayMode lastMode = null;
-
 	@Inject
 	public GameOverlay(Client client, ChatOverlayPlugin plugin, ChatOverlayConfig config,
 		BubbleRenderer renderer, ChatColorResolver colorResolver)
@@ -46,6 +44,29 @@ public class GameOverlay extends Overlay
 		setPosition(OverlayPosition.DYNAMIC);
 		setLayer(OverlayLayer.ABOVE_SCENE);
 		setPriority(Overlay.PRIORITY_HIGH);
+	}
+
+	void prepareRegistration()
+	{
+		boolean floating = config.systemAlertMode() == GameOverlayMode.OVERLAY;
+		setPosition(floating ? OverlayPosition.TOP_LEFT : OverlayPosition.DYNAMIC);
+		setLayer(floating && !config.drawBelowInterfaces() ? OverlayLayer.ABOVE_WIDGETS : OverlayLayer.ABOVE_SCENE);
+		// RuneLite would clear saved floating placement when loading a non-movable overlay.
+		setMovable(true);
+		setSnappable(true);
+	}
+
+	void finishRegistration()
+	{
+		if (config.systemAlertMode() == GameOverlayMode.PINNED_TO_PLAYER)
+		{
+			setMovable(false);
+			setSnappable(false);
+			setPreferredLocation(null);
+			setPreferredSize(null);
+			setPreferredPosition(null);
+			getBounds().setBounds(0, 0, 0, 0);
+		}
 	}
 
 	@Override
@@ -113,24 +134,6 @@ public class GameOverlay extends Overlay
 		}
 
 		GameOverlayMode mode = config.systemAlertMode();
-		if (mode != lastMode)
-		{
-			lastMode = mode;
-			if (mode == GameOverlayMode.OVERLAY)
-			{
-				setPosition(OverlayPosition.TOP_LEFT);
-				setLayer(OverlayLayer.ABOVE_WIDGETS);
-				setMovable(true);
-				setSnappable(true);
-			}
-			else
-			{
-				setPosition(OverlayPosition.DYNAMIC);
-				setLayer(OverlayLayer.ABOVE_SCENE);
-				setPreferredLocation(null);
-				setPreferredSize(null);
-			}
-		}
 
 		renderer.configureRenderingHints(graphics);
 		Font font = renderer.resolveFont();

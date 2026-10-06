@@ -25,6 +25,8 @@ import net.runelite.client.input.KeyListener;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.client.ui.overlay.OverlayLayer;
+import net.runelite.client.callback.ClientThread;
 import java.awt.event.KeyEvent;
 import net.runelite.client.util.Text;
 import net.runelite.api.Player;
@@ -52,9 +54,11 @@ public class ChatOverlayPlugin extends Plugin
 	@Inject private ClanChatOverlay       clanChatOverlay;
 	@Inject private ChatColorResolver     colorResolver;
 	@Inject private ChannelNameResolver   channelNames;
+	@Inject private ClientThread          clientThread;
 
 	private final ChatMessageManager messageManager = new ChatMessageManager();
 	private final FilterMatcher      filterMatcher  = new FilterMatcher();
+	private volatile boolean running;
 
 	private volatile boolean   peekActive   = false;
 	private KeyListener        peekListener;
@@ -271,10 +275,8 @@ public class ChatOverlayPlugin extends Plugin
 		};
 		keyManager.registerKeyListener(peekListener);
 
-		overlayManager.add(publicClanOverlay);
-		overlayManager.add(privateChatOverlay);
-		overlayManager.add(systemAlertOverlay);
-		overlayManager.add(clanChatOverlay);
+		running = true;
+		refreshOverlayLayers();
 
 		rebuildHighlightPatterns();
 
@@ -284,15 +286,45 @@ public class ChatOverlayPlugin extends Plugin
 	@Override
 	protected void shutDown() throws Exception
 	{
+		running = false;
 		keyManager.unregisterKeyListener(peekListener);
 		peekActive = false;
 
+		clientThread.invoke(this::removeOverlays);
+		messageManager.clearAll();
+		log.info("Chat Overlay plugin stopped");
+	}
+
+	private void removeOverlays()
+	{
 		overlayManager.remove(publicClanOverlay);
 		overlayManager.remove(privateChatOverlay);
 		overlayManager.remove(systemAlertOverlay);
 		overlayManager.remove(clanChatOverlay);
-		messageManager.clearAll();
-		log.info("Chat Overlay plugin stopped");
+	}
+
+	private void refreshOverlayLayers()
+	{
+		clientThread.invoke(() ->
+		{
+			if (!running)
+			{
+				return;
+			}
+			removeOverlays();
+			OverlayLayer layer = config.drawBelowInterfaces() ? OverlayLayer.ABOVE_SCENE : OverlayLayer.ABOVE_WIDGETS;
+			publicClanOverlay.setLayer(layer);
+			privateChatOverlay.setLayer(layer);
+			clanChatOverlay.setLayer(layer);
+			systemAlertOverlay.prepareRegistration();
+
+			// Re-register to refresh RuneLite's layer registry and load saved floating placement.
+			overlayManager.add(publicClanOverlay);
+			overlayManager.add(privateChatOverlay);
+			overlayManager.add(systemAlertOverlay);
+			overlayManager.add(clanChatOverlay);
+			systemAlertOverlay.finishRegistration();
+		});
 	}
 
 	// ── Event handlers ────────────────────────────────────────────────────────
@@ -359,6 +391,11 @@ public class ChatOverlayPlugin extends Plugin
 		if (event.getGroup().equals("chatoverlay") && event.getKey().equals("highlightKeywordsList"))
 		{
 			rebuildHighlightPatterns();
+		}
+		else if (event.getGroup().equals("chatoverlay")
+			&& (event.getKey().equals("drawBelowInterfaces") || event.getKey().equals("systemAlertMode")))
+		{
+			refreshOverlayLayers();
 		}
 		else if (event.getGroup().equals("chatfilter"))
 		{
@@ -530,6 +567,7 @@ public class ChatOverlayPlugin extends Plugin
 			case GAMEMESSAGE: case ENGINE: case SPAM:
 			case BROADCAST: case FRIENDSCHATNOTIFICATION: case FRIENDNOTIFICATION:
 			case LOGINLOGOUTNOTIFICATION: case WELCOME: case CONSOLE: case UNKNOWN:
+			case ITEM_EXAMINE: case NPC_EXAMINE: case OBJECT_EXAMINE:
 				handleSystemMessage(event.getMessageNode(), type, rawMsg, lower);
 				break;
 
@@ -632,6 +670,9 @@ public class ChatOverlayPlugin extends Plugin
 			case ENGINE:
 			case CONSOLE:
 			case UNKNOWN:
+			case ITEM_EXAMINE:
+			case NPC_EXAMINE:
+			case OBJECT_EXAMINE:
 			{
 				if (gameFilter == 2) return; // Off
 				addSystemLine(messageNode, rawMsg, type, true);
@@ -947,6 +988,11 @@ public class ChatOverlayPlugin extends Plugin
 			}
 			case SYSTEM:
 			{
+				if (line.getChatMessageType() == ChatMessageType.LOGINLOGOUTNOTIFICATION
+					&& !areFriendNotificationsEnabled())
+				{
+					return false;
+				}
 				ChatFilterState state = getFilterState(10);
 				if (state == ChatFilterState.OFF)
 				{
@@ -963,6 +1009,14 @@ public class ChatOverlayPlugin extends Plugin
 			}
 		}
 		return true;
+	}
+
+	private boolean areFriendNotificationsEnabled()
+	{
+		// Game script 4487: a nonzero legacy setting overrides the newer setting. 2 means Off.
+		int legacySetting = client.getVarbitValue(VarbitID.LOGINLOGOUT_PERMANENT);
+		int setting = legacySetting != 0 ? legacySetting : client.getVarbitValue(VarbitID.LOGINLOGOUT_SETTING);
+		return setting != 2;
 	}
 
 	private String normalizeName(String name)
