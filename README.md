@@ -50,7 +50,7 @@ Splits the OSRS chatbox into draggable, resizable, and independently configurabl
 
 ### Peek Mode
 - Hold a configurable hotkey (default: **Alt**) to instantly reveal all faded or expired messages at full opacity across every overlay
-- An **amber border** is drawn around all bubbles while peeking so you can tell the mode is active
+- A border is drawn around all bubbles while peeking so you can tell the mode is active; customize **Peek Border Color** directly below **Peek Mode** in General settings (amber by default)
 - Messages are never pruned by time — only by count — so they are always available to peek at
 
 ### Player Icons
@@ -61,7 +61,7 @@ Splits the OSRS chatbox into draggable, resizable, and independently configurabl
 ### Bubble Borders
 - Each overlay supports an optional 1 px rounded border around every chat bubble
 - Independently toggleable per overlay with its own color picker
-- Overrides to amber automatically while Peek Mode is active
+- Overrides to the configured **Peek Border Color** automatically while Peek Mode is active
 
 ### General behavior
 - **In-Game Chat Filter Sync** — The overlays automatically synchronize with your active in-game chat box filter buttons (Public, Private, Clan, Friends Chat, Game) using robust real-time widget checks. If a filter is turned off or hidden in-game, the overlay immediately hides it

@@ -200,11 +200,24 @@ public interface ChatOverlayConfig extends Config
 		return true;
 	}
 
+	@Alpha
+	@ConfigItem(
+		keyName = "peekBorderColor",
+		name = "Peek Border Color",
+		description = "Border color for all chat bubbles while Peek Mode is active",
+		position = 10,
+		section = "general"
+	)
+	default Color peekBorderColor()
+	{
+		return new Color(255, 200, 0, 220);
+	}
+
 	@ConfigItem(
 		keyName = "peekKey",
 		name = "Peek Key",
 		description = "Hold this key to peek at all chat messages at full opacity",
-		position = 10,
+		position = 11,
 		section = "general"
 	)
 	default Keybind peekKey()
@@ -216,7 +229,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "showPlayerIcons",
 		name = "Show Player Icons",
 		description = "Display Ironman, J-Mod, Clan, and Friends Chat rank icons next to sender names in chat bubbles",
-		position = 11,
+		position = 12,
 		section = "general"
 	)
 	default boolean showPlayerIcons()
@@ -228,7 +241,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "timestampFormat",
 		name = "Timestamp Format",
 		description = "Format style for chat message timestamps",
-		position = 12,
+		position = 13,
 		section = "general"
 	)
 	default TimestampFormat timestampFormat()
@@ -240,7 +253,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "fadeInDuration",
 		name = "Fade In Duration (seconds)",
 		description = "Duration in seconds for the fade-in effect",
-		position = 13,
+		position = 14,
 		section = "general"
 	)
 	@Range(min = 0, max = 10)
@@ -253,7 +266,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "fadeOutDuration",
 		name = "Fade Out Duration (seconds)",
 		description = "Duration in seconds for the fade-out effect before expiring",
-		position = 14,
+		position = 15,
 		section = "general"
 	)
 	@Range(min = 0, max = 10)
@@ -267,7 +280,7 @@ public interface ChatOverlayConfig extends Config
 		name = "Draw Below Game Interfaces",
 		description = "Draw floating chat below bank, shop, trade and other game interfaces. "
 			+ "In fixed mode, chat is clipped to the game viewport. Pinned Game Chat already draws below interfaces.",
-		position = 15,
+		position = 16,
 		section = "general"
 	)
 	default boolean drawBelowInterfaces()

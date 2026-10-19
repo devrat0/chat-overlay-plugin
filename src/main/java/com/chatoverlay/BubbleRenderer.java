@@ -24,7 +24,6 @@ import net.runelite.client.ui.FontManager;
 public class BubbleRenderer
 {
 	public static final int BORDER_RADIUS = 12;
-	private static final Color PEEK_AMBER = new Color(255, 200, 0, 220);
 
 	private final ChatOverlayConfig config;
 
@@ -209,9 +208,9 @@ public class BubbleRenderer
 	}
 
 	/**
-	 * Draws a 1 px rounded border. When {@code isPeek} is true the border uses amber
-	 * regardless of {@code borderColor}. Skips drawing when neither {@code showBorder}
-	 * nor {@code isPeek} is true.
+	 * Draws a 1 px rounded border. When {@code isPeek} is true the border uses the
+	 * configured peek color regardless of {@code borderColor}. Skips drawing when
+	 * neither {@code showBorder} nor {@code isPeek} is true.
 	 */
 	public void drawBubbleBorder(Graphics2D graphics,
 		int x, int y, int width, int height,
@@ -221,7 +220,7 @@ public class BubbleRenderer
 		{
 			return;
 		}
-		Color bc = isPeek ? PEEK_AMBER : borderColor;
+		Color bc = isPeek ? config.peekBorderColor() : borderColor;
 		graphics.setColor(new Color(bc.getRed(), bc.getGreen(), bc.getBlue(),
 			Math.min(255, (int) (bc.getAlpha() * alpha))));
 		graphics.setStroke(new BasicStroke(1f));
