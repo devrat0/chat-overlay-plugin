@@ -44,7 +44,8 @@ public class ChatLine
 		{
 			return null;
 		}
-		String cleaned = CA_PREFIX_PATTERN.matcher(msg).replaceAll("");
+		String cleaned = StringTagResolver.resolve(msg);
+		cleaned = CA_PREFIX_PATTERN.matcher(cleaned).replaceAll("");
 		return BROADCAST_SUFFIX_PATTERN.matcher(cleaned).replaceAll("$1");
 	}
 
