@@ -36,6 +36,7 @@ Splits the OSRS chatbox into draggable, resizable, and independently configurabl
 
 ### Message Filtering
 - **Game Chat** retains its category filters, **Game Chat Patterns**, and duplicate cooldown. These rules also apply to Game messages merged into Main, even when the dedicated Game overlay is disabled
+- **Filter Examine Messages** in Game Chat settings hides item, NPC, and object examines in Game and Main; off by default
 - Hover over Game category filters to see every matching pattern, with each pattern on its own line. Built-in status filters exclude player chat, examines, friend activity, and broadcasts
 - Add unwanted Game messages to **Game Chat Patterns**, for example `your inventory is full,your inventory is too full,you already have full prayer points`. Keep **Filter Game Chat Patterns** enabled to use them
 - **Main Chat**, **Private Chat**, and **Clan Chat** each have an optional **Enable Filtering** checkbox and **Filter** box, empty and disabled by default

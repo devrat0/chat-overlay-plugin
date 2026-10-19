@@ -27,6 +27,12 @@ public class MessageFilterPolicy
 
 		String text = line.getPlainMessage().toLowerCase(Locale.ROOT).trim();
 		ChatMessageType type = line.getChatMessageType();
+		if (config.filterExamineMessages() && (type == ChatMessageType.ITEM_EXAMINE
+			|| type == ChatMessageType.NPC_EXAMINE || type == ChatMessageType.OBJECT_EXAMINE))
+		{
+			return false;
+		}
+
 		if (config.filterSystemConsole() && (type == ChatMessageType.CONSOLE || type == ChatMessageType.UNKNOWN))
 		{
 			return false;

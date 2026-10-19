@@ -1559,11 +1559,24 @@ public interface ChatOverlayConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "filterExamineMessages",
+		name = "Filter Examine Messages",
+		description = "Hide item, NPC, and object examine messages.<br>"
+			+ "Applies in Game and when merged into Main.",
+		position = 22,
+		section = "system"
+	)
+	default boolean filterExamineMessages()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "spamPatterns",
 		name = "Game Chat Patterns",
 		description = "Game/system messages only, in Game and Main.<br>"
 			+ "Requires Filter Game Chat Patterns.<br>" + FILTER_PATTERN_DESCRIPTION,
-		position = 22,
+		position = 23,
 		section = "system"
 	)
 	default String spamPatterns()
@@ -1584,7 +1597,7 @@ public interface ChatOverlayConfig extends Config
 			+ "Requires Filter Game Chat Patterns.<br>"
 			+ "Skipped while Game chat collapsing is enabled.<br>"
 			+ "Set to 0 to allow all duplicates.",
-		position = 23,
+		position = 24,
 		section = "system"
 	)
 	@Range(min = 0, max = 30)
@@ -1598,7 +1611,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "systemTimestampColor",
 		name = "Timestamp Color",
 		description = "Custom color override for timestamps in the game chat overlay",
-		position = 24,
+		position = 25,
 		section = "system"
 	)
 	default Color systemTimestampColor()
@@ -1611,7 +1624,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "systemUsernameColor",
 		name = "Username Color",
 		description = "Custom color override for usernames in the game chat overlay",
-		position = 25,
+		position = 26,
 		section = "system"
 	)
 	default Color systemUsernameColor()
@@ -1624,7 +1637,7 @@ public interface ChatOverlayConfig extends Config
 		keyName = "systemTextColor",
 		name = "Text Color",
 		description = "Custom color override for message text in the game chat overlay",
-		position = 26,
+		position = 27,
 		section = "system"
 	)
 	default Color systemTextColor()
@@ -1638,7 +1651,7 @@ public interface ChatOverlayConfig extends Config
 		description = "Hide console and unknown system messages.<br>"
 			+ "Applies in Game and when merged into Main.<br>"
 			+ "Does not hide broadcasts or examine text.",
-		position = 27,
+		position = 28,
 		section = "system"
 	)
 	default boolean filterSystemConsole()
