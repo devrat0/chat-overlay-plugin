@@ -1,11 +1,15 @@
 package com.chatoverlay;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.ChatMessageType;
 
-/** Text visibility rules shared by every overlay; capture and duplicate handling stay separate. */
+/** Game Chat visibility rules, optionally applied to game messages in Main Chat. */
 @Singleton
 public class MessageFilterPolicy
 {
@@ -59,6 +63,38 @@ public class MessageFilterPolicy
 	public boolean matches(String patterns, ChatLine line)
 	{
 		return matcher.matches(patterns, line.getPlainMessage().toLowerCase(Locale.ROOT).trim());
+	}
+
+	/** Filters a view of chronological history without removing messages from other overlays. */
+	public List<ChatLine> filterGameMessages(List<ChatLine> lines, boolean collapseGameChat)
+	{
+		List<ChatLine> visible = new ArrayList<>();
+		Map<String, Long> lastShown = new HashMap<>();
+		long cooldownMs = config.filterSpamAlerts() && !collapseGameChat
+			? config.spamCooldownSeconds() * 1000L : 0L;
+		for (ChatLine line : lines)
+		{
+			if (!shouldShow(line))
+			{
+				continue;
+			}
+
+			// Broadcasts and welcome messages have never used the duplicate cooldown.
+			if (cooldownMs > 0 && line.getCategory() == ChatCategory.SYSTEM
+				&& line.getChatMessageType() != ChatMessageType.BROADCAST
+				&& line.getChatMessageType() != ChatMessageType.WELCOME)
+			{
+				String text = line.getPlainMessage().toLowerCase(Locale.ROOT).trim();
+				Long previous = lastShown.get(text);
+				if (previous != null && line.getTimestamp() - previous < cooldownMs)
+				{
+					continue;
+				}
+				lastShown.put(text, line.getTimestamp());
+			}
+			visible.add(line);
+		}
+		return visible;
 	}
 
 	private boolean isGameStatus(ChatMessageType type)

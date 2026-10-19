@@ -61,6 +61,10 @@ public class PublicClanChatOverlay extends Overlay
 		}
 
 		List<ChatLine> allMessages = plugin.getMessageManager().getPublicClanMessages();
+		if (config.mainUseGameChatFilters())
+		{
+			allMessages = plugin.applyGameChatFilters(allMessages);
+		}
 		List<ChatLine> messages = new java.util.ArrayList<>();
 		for (ChatLine line : allMessages)
 		{

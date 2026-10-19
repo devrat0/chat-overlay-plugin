@@ -722,39 +722,22 @@ public class ChatOverlayPlugin extends Plugin
 			case OBJECT_EXAMINE:
 			{
 				if (gameFilter == 2) return; // Off
-				addSystemLine(messageNode, rawMsg, type, true);
+				addSystemLine(messageNode, rawMsg, type);
 				break;
 			}
 			case SPAM:
 			{
 				if (gameFilter != 0) return; // Filter or Off
-				addSystemLine(messageNode, rawMsg, type, true);
+				addSystemLine(messageNode, rawMsg, type);
 				break;
 			}
 			case BROADCAST:
-			{
-				ChatLine line = new ChatLine(messageNode, null, null, rawMsg, ChatCategory.SYSTEM, type);
-				messageManager.addSystemMessage(line, 100, false, 0L, isCollapseGameChat());
-				messageManager.addPublicClanMessage(line, 100, isCollapseGameChat());
-				break;
-			}
 			case FRIENDSCHATNOTIFICATION:
 			case FRIENDNOTIFICATION:
 			case LOGINLOGOUTNOTIFICATION:
-			{
-				ChatLine line = new ChatLine(messageNode, null, null, rawMsg, ChatCategory.SYSTEM, type);
-				boolean added = messageManager.addSystemMessage(line, 100, config.filterSpamAlerts(), config.spamCooldownSeconds() * 1000L, isCollapseGameChat());
-				if (added)
-				{
-					messageManager.addPublicClanMessage(line, 100, isCollapseGameChat());
-				}
-				break;
-			}
 			case WELCOME:
 			{
-				ChatLine line = new ChatLine(messageNode, null, null, rawMsg, ChatCategory.SYSTEM, type);
-				messageManager.addSystemMessage(line, 100, false, 0L, isCollapseGameChat());
-				messageManager.addPublicClanMessage(line, 100, isCollapseGameChat());
+				addSystemLine(messageNode, rawMsg, type);
 				break;
 			}
 			default:
@@ -762,16 +745,13 @@ public class ChatOverlayPlugin extends Plugin
 		}
 	}
 
-	/** Creates and queues a standard system line (used for GAMEMESSAGE, ENGINE, SPAM). */
-	private void addSystemLine(net.runelite.api.MessageNode messageNode, String rawMsg, ChatMessageType type, boolean useFilter)
+	/** Retains game messages for both overlays; each view applies its own filters. */
+	private void addSystemLine(net.runelite.api.MessageNode messageNode, String rawMsg, ChatMessageType type)
 	{
 		ChatLine line = new ChatLine(messageNode, null, null, rawMsg, ChatCategory.SYSTEM, type);
-		boolean added = messageManager.addSystemMessage(line, 100,
-			useFilter && config.filterSpamAlerts(), config.spamCooldownSeconds() * 1000L, isCollapseGameChat());
-		if (added)
-		{
-			messageManager.addPublicClanMessage(line, 100, isCollapseGameChat());
-		}
+		boolean collapse = isCollapseGameChat();
+		messageManager.addSystemMessage(line, 100, collapse);
+		messageManager.addPublicClanMessage(line, 100, collapse);
 	}
 
 	// ── Utilities ─────────────────────────────────────────────────────────────
@@ -932,7 +912,12 @@ public class ChatOverlayPlugin extends Plugin
 
 	public boolean shouldShowMessage(ChatLine line)
 	{
-		return line != null && passesInGameFilters(line) && messageFilters.shouldShow(line);
+		return line != null && passesInGameFilters(line);
+	}
+
+	public java.util.List<ChatLine> applyGameChatFilters(java.util.List<ChatLine> lines)
+	{
+		return messageFilters.filterGameMessages(lines, isCollapseGameChat());
 	}
 
 	public boolean shouldShowMessage(ChatLine line, boolean filterEnabled, String patterns)

@@ -81,7 +81,7 @@ public class GameOverlay extends Overlay
 			return null;
 		}
 
-		List<ChatLine> allAlerts = plugin.getMessageManager().getSystemMessages();
+		List<ChatLine> allAlerts = plugin.applyGameChatFilters(plugin.getMessageManager().getSystemMessages());
 		List<ChatLine> alerts = new java.util.ArrayList<>();
 		for (ChatLine alert : allAlerts)
 		{

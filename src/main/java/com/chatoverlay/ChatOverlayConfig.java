@@ -70,6 +70,8 @@ public interface ChatOverlayConfig extends Config
 		+ "Case-insensitive; plain text matches anywhere.<br>"
 		+ "With *, match the whole message: *spam* matches<br>"
 		+ "any message containing spam.";
+	String GAME_FILTER_SCOPE_DESCRIPTION = "Applies to Game Chat.<br>"
+		+ "Main Chat uses this only with Use Game Chat Filters enabled.<br>";
 
 	// ──────────────────────────────────────────────
 	//  GENERAL
@@ -673,8 +675,8 @@ public interface ChatOverlayConfig extends Config
 	@ConfigItem(
 		keyName = "mainFilterEnabled",
 		name = "Enable Filtering",
-		description = "Apply Filter to messages displayed in Main only.<br>"
-			+ "Game messages also respect Game Chat filters.",
+		description = "Apply Main Chat's Filter patterns to messages displayed here.<br>"
+			+ "Use Game Chat Filters separately adds Game Chat's filters to game messages.",
 		position = 23,
 		section = "publicClan"
 	)
@@ -684,10 +686,25 @@ public interface ChatOverlayConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "mainUseGameChatFilters",
+		name = "Use Game Chat Filters",
+		description = "Also apply all Game Chat filters to game messages in Main Chat,<br>"
+			+ "including category filters, patterns, and duplicate cooldown.<br>"
+			+ "Works independently of Enable Filtering and adds to any enabled Main Chat Filter patterns.<br>"
+			+ "Works even with the Game Chat overlay turned off.",
+		position = 24,
+		section = "publicClan"
+	)
+	default boolean mainUseGameChatFilters()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "mainFilterPatterns",
 		name = "Filter",
 		description = FILTER_PATTERN_DESCRIPTION,
-		position = 24,
+		position = 25,
 		section = "publicClan"
 	)
 	default String mainFilterPatterns()
@@ -1498,8 +1515,7 @@ public interface ChatOverlayConfig extends Config
 	@ConfigItem(
 		keyName = "filterSpamAlerts",
 		name = "Filter Game Chat Patterns",
-		description = "Hide matching Game/system messages in Game and Main.<br>"
-			+ "Works even with the Game overlay turned off.<br>"
+		description = GAME_FILTER_SCOPE_DESCRIPTION + "Hide matching Game/system messages.<br>"
 			+ "Also enables duplicate cooldown when collapsing is off.",
 		position = 17,
 		section = "system"
@@ -1512,7 +1528,7 @@ public interface ChatOverlayConfig extends Config
 	@ConfigItem(
 		keyName = "filterInteractionSpam",
 		name = "Filter Interaction Failures",
-		description = "Game-status messages in Game and Main.<br>Patterns:<br>"
+		description = GAME_FILTER_SCOPE_DESCRIPTION + "Game-status messages only.<br>Patterns:<br>"
 			+ "you can't reach that<br>i can't reach that<br>"
 			+ "nothing interesting happens<br>you can't do that right now<br>"
 			+ "please finish what you're doing<br>you need to be closer<br>"
@@ -1528,7 +1544,7 @@ public interface ChatOverlayConfig extends Config
 	@ConfigItem(
 		keyName = "filterSkillingSpam",
 		name = "Filter Skilling Spam",
-		description = "Game-status messages in Game and Main.<br>"
+		description = GAME_FILTER_SCOPE_DESCRIPTION + "Game-status messages only.<br>"
 			+ "Patterns (* is a wildcard):<br>"
 			+ "you swing your axe<br>you get some * logs<br>you get some * ore<br>"
 			+ "you swing your pick<br>you manage to mine<br>you catch a<br>"
@@ -1546,7 +1562,7 @@ public interface ChatOverlayConfig extends Config
 	@ConfigItem(
 		keyName = "filterCombatLootSpam",
 		name = "Filter Combat/Loot Spam",
-		description = "Game-status messages in Game and Main.<br>Patterns:<br>"
+		description = GAME_FILTER_SCOPE_DESCRIPTION + "Game-status messages only.<br>Patterns:<br>"
 			+ "your ring of wealth<br>you find some coins<br>"
 			+ "you retrieve your ammo<br>you drop the<br>you construct a",
 		position = 20,
@@ -1560,7 +1576,7 @@ public interface ChatOverlayConfig extends Config
 	@ConfigItem(
 		keyName = "filterConsumablesSpam",
 		name = "Filter Consumables",
-		description = "Game-status messages in Game and Main.<br>Patterns:<br>"
+		description = GAME_FILTER_SCOPE_DESCRIPTION + "Game-status messages only.<br>Patterns:<br>"
 			+ "you eat the<br>you drink the<br>it heals some health<br>"
 			+ "you restore some<br>you drink some of your",
 		position = 21,
@@ -1574,8 +1590,7 @@ public interface ChatOverlayConfig extends Config
 	@ConfigItem(
 		keyName = "filterExamineMessages",
 		name = "Filter Examine Messages",
-		description = "Hide item, NPC, and object examine messages.<br>"
-			+ "Applies in Game and when merged into Main.",
+		description = GAME_FILTER_SCOPE_DESCRIPTION + "Hide item, NPC, and object examine messages.",
 		position = 22,
 		section = "system"
 	)
@@ -1587,7 +1602,7 @@ public interface ChatOverlayConfig extends Config
 	@ConfigItem(
 		keyName = "spamPatterns",
 		name = "Game Chat Patterns",
-		description = "Game/system messages only, in Game and Main.<br>"
+		description = GAME_FILTER_SCOPE_DESCRIPTION + "Game/system messages only.<br>"
 			+ "Requires Filter Game Chat Patterns.<br>" + FILTER_PATTERN_DESCRIPTION,
 		position = 23,
 		section = "system"
@@ -1606,7 +1621,7 @@ public interface ChatOverlayConfig extends Config
 	@ConfigItem(
 		keyName = "spamCooldownSeconds",
 		name = "Game Duplicate Cooldown (seconds)",
-		description = "Minimum seconds between identical Game/system messages.<br>"
+		description = GAME_FILTER_SCOPE_DESCRIPTION + "Minimum seconds between identical Game/system messages.<br>"
 			+ "Requires Filter Game Chat Patterns.<br>"
 			+ "Skipped while Game chat collapsing is enabled.<br>"
 			+ "Set to 0 to allow all duplicates.",
@@ -1661,8 +1676,7 @@ public interface ChatOverlayConfig extends Config
 	@ConfigItem(
 		keyName = "filterSystemConsole",
 		name = "Filter System/Console",
-		description = "Hide console and unknown system messages.<br>"
-			+ "Applies in Game and when merged into Main.<br>"
+		description = GAME_FILTER_SCOPE_DESCRIPTION + "Hide console and unknown system messages.<br>"
 			+ "Does not hide broadcasts or examine text.",
 		position = 28,
 		section = "system"

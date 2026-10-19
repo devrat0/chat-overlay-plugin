@@ -35,12 +35,13 @@ Splits the OSRS chatbox into draggable, resizable, and independently configurabl
 - Optional `[HH:MM]` or `[HH:MM:SS]` timestamp prefix
 
 ### Message Filtering
-- **Game Chat** retains its category filters, **Game Chat Patterns**, and duplicate cooldown. These rules also apply to Game messages merged into Main, even when the dedicated Game overlay is disabled
-- **Filter Examine Messages** in Game Chat settings hides item, NPC, and object examines in Game and Main; off by default
+- **Game Chat** has its own category filters, **Game Chat Patterns**, and duplicate cooldown
+- **Use Game Chat Filters**, directly below Main Chat's **Enable Filtering**, optionally applies all Game Chat filters to game messages in Main; off by default. It works independently of Main's **Enable Filtering**, adds to any enabled Main Filter patterns, and works even when the dedicated Game overlay is disabled
+- **Filter Examine Messages** in Game Chat settings hides item, NPC, and object examines; off by default. Main inherits this only with **Use Game Chat Filters** enabled
 - Hover over Game category filters to see every matching pattern, with each pattern on its own line. Built-in status filters exclude player chat, examines, friend activity, and broadcasts
 - Add unwanted Game messages to **Game Chat Patterns**, for example `your inventory is full,your inventory is too full,you already have full prayer points`. Keep **Filter Game Chat Patterns** enabled to use them
 - **Main Chat**, **Private Chat**, and **Clan Chat** each have an optional **Enable Filtering** checkbox and **Filter** box, empty and disabled by default
-- Each overlay's Filter applies only to messages displayed there. Private/Clan messages merged into Main use Main's Filter; Game messages in Main respect both Game's rules and Main's optional Filter
+- Each overlay's Filter applies only to messages displayed there. Private/Clan messages merged into Main use Main's Filter; Game messages in Main use Main's optional Filter, plus Game's rules only when **Use Game Chat Filters** is enabled
 - Enter one pattern per line or separate patterns with commas. Matching ignores formatting tags and letter case. Plain patterns match substrings; patterns containing `*` match the whole message, with `*` matching any text (for example, `*spam*`)
 - Changes apply immediately to retained messages, including Peek Mode. Filters affect visibility; messages remain in history until the normal history count limit or a history clear
 
