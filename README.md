@@ -31,9 +31,17 @@ Splits the OSRS chatbox into draggable, resizable, and independently configurabl
   - **Pinned to Player** — bubbles float above your character, always in view
   - **Free Overlay** — a draggable panel you can place anywhere
 - Messages auto-expire after a configurable duration (default 4 seconds)
-- **Spam filter** — suppresses repetitive messages matching configurable patterns
-- **Cooldown deduplication** — identical messages within a configurable window (default 3 s) are shown only once
+- **Cooldown deduplication** — with Filter Game Chat Patterns enabled and Game chat collapsing disabled, identical messages within a configurable window (default 3 s) are shown only once
 - Optional `[HH:MM]` or `[HH:MM:SS]` timestamp prefix
+
+### Message Filtering
+- **Game Chat** retains its category filters, **Game Chat Patterns**, and duplicate cooldown. These rules also apply to Game messages merged into Main, even when the dedicated Game overlay is disabled
+- Hover over Game category filters to see every matching pattern, with each pattern on its own line. Built-in status filters exclude player chat, examines, friend activity, and broadcasts
+- Add unwanted Game messages to **Game Chat Patterns**, for example `your inventory is full,your inventory is too full,you already have full prayer points`. Keep **Filter Game Chat Patterns** enabled to use them
+- **Main Chat**, **Private Chat**, and **Clan Chat** each have an optional **Enable Filtering** checkbox and **Filter** box, empty and disabled by default
+- Each overlay's Filter applies only to messages displayed there. Private/Clan messages merged into Main use Main's Filter; Game messages in Main respect both Game's rules and Main's optional Filter
+- Enter one pattern per line or separate patterns with commas. Matching ignores formatting tags and letter case. Plain patterns match substrings; patterns containing `*` match the whole message, with `*` matching any text (for example, `*spam*`)
+- Changes apply immediately to retained messages, including Peek Mode. Filters affect visibility; messages remain in history until the normal history count limit or a history clear
 
 ### Text Styling & Accents
 - Choose between multiple text styling options: **Standard**, **Shadow**, **Outline**, or **Outline + Shadow**

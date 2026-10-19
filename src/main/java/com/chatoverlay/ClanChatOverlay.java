@@ -58,7 +58,7 @@ public class ClanChatOverlay extends Overlay {
         List<ChatLine> allMessages = plugin.getMessageManager().getClanMessages();
         List<ChatLine> messages = new java.util.ArrayList<>();
         for (ChatLine line : allMessages) {
-            if (!plugin.shouldShowMessage(line)) {
+            if (!plugin.shouldShowMessage(line, config.clanFilterEnabled(), config.clanFilterPatterns())) {
                 continue;
             }
             boolean keep = false;

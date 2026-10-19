@@ -65,7 +65,7 @@ public class PrivateChatOverlay extends Overlay
 		List<ChatLine> messages = new java.util.ArrayList<>();
 		for (ChatLine line : allMessages)
 		{
-			if (plugin.shouldShowMessage(line))
+			if (plugin.shouldShowMessage(line, config.privateFilterEnabled(), config.privateFilterPatterns()))
 			{
 				messages.add(line);
 			}

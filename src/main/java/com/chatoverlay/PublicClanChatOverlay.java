@@ -64,7 +64,7 @@ public class PublicClanChatOverlay extends Overlay
 		List<ChatLine> messages = new java.util.ArrayList<>();
 		for (ChatLine line : allMessages)
 		{
-			if (!plugin.shouldShowMessage(line))
+			if (!plugin.shouldShowMessage(line, config.mainFilterEnabled(), config.mainFilterPatterns()))
 			{
 				continue;
 			}
@@ -84,7 +84,7 @@ public class PublicClanChatOverlay extends Overlay
 					keep = config.showPrivateChatInMain();
 					break;
 				case SYSTEM:
-					keep = config.showGameMessagesInMain() && !plugin.isSystemMessageFiltered(line.getPlainMessage().toLowerCase());
+					keep = config.showGameMessagesInMain();
 					break;
 			}
 			if (keep)

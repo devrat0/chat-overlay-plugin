@@ -1,7 +1,9 @@
 package com.chatoverlay;
 
+import java.util.Locale;
+
 /**
- * Matches comma-separated filter patterns against messages.
+ * Matches comma- or newline-separated filter patterns against messages.
  *
  * <p>Per-pattern rules (case-insensitive):
  * <ul>
@@ -101,7 +103,7 @@ public class FilterMatcher
 	/**
 	 * Returns true if {@code lowerMessage} matches any pattern in {@code rawPatterns}.
 	 *
-	 * @param rawPatterns  comma-separated pattern string from config
+	 * @param rawPatterns  comma- or newline-separated pattern string from config
 	 * @param lowerMessage the plain message text, already lowercased by the caller
 	 */
 	public boolean matches(String rawPatterns, String lowerMessage)
@@ -110,9 +112,9 @@ public class FilterMatcher
 		{
 			return false;
 		}
-		for (String part : rawPatterns.split(","))
+		for (String part : rawPatterns.split("[,\\r\\n]"))
 		{
-			String pattern = part.trim().toLowerCase();
+			String pattern = part.trim().toLowerCase(Locale.ROOT);
 			if (pattern.isEmpty())
 			{
 				continue;

@@ -85,17 +85,7 @@ public class GameOverlay extends Overlay
 		List<ChatLine> alerts = new java.util.ArrayList<>();
 		for (ChatLine alert : allAlerts)
 		{
-			if (!plugin.shouldShowMessage(alert))
-			{
-				continue;
-			}
-			if (config.filterSystemConsole() &&
-				(alert.getChatMessageType() == net.runelite.api.ChatMessageType.CONSOLE ||
-				 alert.getChatMessageType() == net.runelite.api.ChatMessageType.UNKNOWN))
-			{
-				continue;
-			}
-			if (!plugin.isSystemMessageFiltered(alert.getPlainMessage().toLowerCase()))
+			if (plugin.shouldShowMessage(alert))
 			{
 				alerts.add(alert);
 			}
@@ -107,30 +97,10 @@ public class GameOverlay extends Overlay
 		}
 
 		int maxAlerts = config.systemMaxAlerts();
-		int activeCount = 0;
-		for (ChatLine alert : alerts)
+		if (alerts.size() > maxAlerts)
 		{
-			if (!alert.isPruned())
-			{
-				activeCount++;
-			}
-		}
-
-		if (activeCount > maxAlerts)
-		{
-			int toPrune = activeCount - maxAlerts;
-			for (ChatLine alert : alerts)
-			{
-				if (!alert.isPruned())
-				{
-					alert.prune();
-					toPrune--;
-					if (toPrune == 0)
-					{
-						break;
-					}
-				}
-			}
+			// Limit this view without deleting shared history needed after a filter change or by Main.
+			alerts = alerts.subList(alerts.size() - maxAlerts, alerts.size());
 		}
 
 		GameOverlayMode mode = config.systemAlertMode();

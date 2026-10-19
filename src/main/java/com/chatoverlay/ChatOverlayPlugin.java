@@ -20,6 +20,7 @@ import net.runelite.client.config.ConfigManager;
 import net.runelite.client.plugins.chatfilter.ChatFilterConfig;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.events.ProfileChanged;
 import net.runelite.client.input.KeyManager;
 import net.runelite.client.input.KeyListener;
 import net.runelite.client.plugins.Plugin;
@@ -55,9 +56,9 @@ public class ChatOverlayPlugin extends Plugin
 	@Inject private ChatColorResolver     colorResolver;
 	@Inject private ChannelNameResolver   channelNames;
 	@Inject private ClientThread          clientThread;
+	@Inject private MessageFilterPolicy   messageFilters;
 
 	private final ChatMessageManager messageManager = new ChatMessageManager();
-	private final FilterMatcher      filterMatcher  = new FilterMatcher();
 	private volatile boolean running;
 
 	private volatile boolean   peekActive   = false;
@@ -234,6 +235,7 @@ public class ChatOverlayPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
+		migrateGlobalFilters();
 		peekListener = new KeyListener()
 		{
 			@Override
@@ -383,6 +385,60 @@ public class ChatOverlayPlugin extends Plugin
 		else if (widgetId == InterfaceID.Chatbox.CHAT_PRIVATE)    { messageManager.clearPrivateMessages(); }
 		else if (widgetId == InterfaceID.Chatbox.CHAT_FRIENDSCHAT){ messageManager.clearPublicClanMessages(); messageManager.clearClanMessages(); }
 		else if (widgetId == InterfaceID.Chatbox.CHAT_CLAN)       { messageManager.clearPublicClanMessages(); messageManager.clearClanMessages(); }
+	}
+
+	@Subscribe
+	public void onProfileChanged(ProfileChanged event)
+	{
+		migrateGlobalFilters();
+	}
+
+	/** Preserve saved preferences from the unreleased global-filter configuration. */
+	private void migrateGlobalFilters()
+	{
+		String group = "chatoverlay";
+		if (Boolean.parseBoolean(configManager.getConfiguration(group, "overlayFiltersMigrated")))
+		{
+			return;
+		}
+
+		String patterns = configManager.getConfiguration(group, "allChatPatterns");
+		if (patterns != null && !patterns.trim().isEmpty())
+		{
+			boolean enabled = Boolean.parseBoolean(configManager.getConfiguration(group, "filterAllChatPatterns"));
+			for (String overlay : new String[]{"main", "private", "clan"})
+			{
+				String current = configManager.getConfiguration(group, overlay + "FilterPatterns");
+				if ((current == null || current.isEmpty())
+					&& !Boolean.parseBoolean(configManager.getConfiguration(group, overlay + "FilterEnabled")))
+				{
+					configManager.setConfiguration(group, overlay + "FilterPatterns", patterns);
+					configManager.setConfiguration(group, overlay + "FilterEnabled", enabled);
+				}
+			}
+
+			if (enabled)
+			{
+				String[] keys = {"spamPatterns", "filterSpamAlerts", "spamCooldownSeconds"};
+				Object[] values = {config.spamPatterns(), config.filterSpamAlerts(), config.spamCooldownSeconds()};
+				for (int i = 0; i < keys.length; i++)
+				{
+					String backupKey = "globalFilterBackup_" + keys[i];
+					if (configManager.getConfiguration(group, backupKey) == null)
+					{
+						configManager.setConfiguration(group, backupKey, values[i]);
+					}
+				}
+
+				boolean gameEnabled = Boolean.parseBoolean(configManager.getConfiguration(group, "globalFilterBackup_filterSpamAlerts"));
+				String gamePatterns = gameEnabled ? configManager.getConfiguration(group, "globalFilterBackup_spamPatterns") : "";
+				String cooldown = gameEnabled ? configManager.getConfiguration(group, "globalFilterBackup_spamCooldownSeconds") : "0";
+				configManager.setConfiguration(group, "spamPatterns", gamePatterns.isEmpty() ? patterns : gamePatterns + "\n" + patterns);
+				configManager.setConfiguration(group, "spamCooldownSeconds", cooldown);
+				configManager.setConfiguration(group, "filterSpamAlerts", true);
+			}
+		}
+		configManager.setConfiguration(group, "overlayFiltersMigrated", true);
 	}
 
 	@Subscribe
@@ -651,15 +707,6 @@ public class ChatOverlayPlugin extends Plugin
 		messageManager.addPublicClanMessage(line, 100, isCollapsePlayerChat());
 	}
 
-	public boolean isSystemMessageFiltered(String lower)
-	{
-		return (config.filterSpamAlerts() && filterMatcher.matches(config.spamPatterns(), lower))
-			|| (config.filterInteractionSpam() && filterMatcher.matchesInteraction(lower))
-			|| (config.filterSkillingSpam() && filterMatcher.matchesSkilling(lower))
-			|| (config.filterCombatLootSpam() && filterMatcher.matchesCombatLoot(lower))
-			|| (config.filterConsumablesSpam() && filterMatcher.matchesConsumables(lower));
-	}
-
 	private void handleSystemMessage(net.runelite.api.MessageNode messageNode, ChatMessageType type, String rawMsg, String lower)
 	{
 		int gameFilter = client.getVarbitValue(VarbitID.GAME_FILTER);
@@ -885,11 +932,16 @@ public class ChatOverlayPlugin extends Plugin
 
 	public boolean shouldShowMessage(ChatLine line)
 	{
-		if (line == null)
-		{
-			return false;
-		}
+		return line != null && passesInGameFilters(line) && messageFilters.shouldShow(line);
+	}
 
+	public boolean shouldShowMessage(ChatLine line, boolean filterEnabled, String patterns)
+	{
+		return shouldShowMessage(line) && (!filterEnabled || !messageFilters.matches(patterns, line));
+	}
+
+	private boolean passesInGameFilters(ChatLine line)
+	{
 		ChatCategory category = line.getCategory();
 		if (category == null)
 		{

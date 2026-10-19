@@ -65,6 +65,12 @@ public interface ChatOverlayConfig extends Config
 	)
 	String systemSection = "system";
 
+	String FILTER_PATTERN_DESCRIPTION = "One pattern per line, or comma-separated.<br>"
+		+ "Matches message text without formatting tags.<br>"
+		+ "Case-insensitive; plain text matches anywhere.<br>"
+		+ "With *, match the whole message: *spam* matches<br>"
+		+ "any message containing spam.";
+
 	// ──────────────────────────────────────────────
 	//  GENERAL
 	// ──────────────────────────────────────────────
@@ -651,6 +657,31 @@ public interface ChatOverlayConfig extends Config
 		return null;
 	}
 
+	@ConfigItem(
+		keyName = "mainFilterEnabled",
+		name = "Enable Filtering",
+		description = "Apply Filter to messages displayed in Main only.<br>"
+			+ "Game messages also respect Game Chat filters.",
+		position = 23,
+		section = "publicClan"
+	)
+	default boolean mainFilterEnabled()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "mainFilterPatterns",
+		name = "Filter",
+		description = FILTER_PATTERN_DESCRIPTION,
+		position = 24,
+		section = "publicClan"
+	)
+	default String mainFilterPatterns()
+	{
+		return "";
+	}
+
 	// ──────────────────────────────────────────────
 	//  PRIVATE CHAT  (above public/clan)
 	// ──────────────────────────────────────────────
@@ -891,6 +922,31 @@ public interface ChatOverlayConfig extends Config
 	default Color privateTextColor()
 	{
 		return null;
+	}
+
+	@ConfigItem(
+		keyName = "privateFilterEnabled",
+		name = "Enable Filtering",
+		description = "Apply Filter to incoming and outgoing PMs here.<br>"
+			+ "Private messages in Main use Main's Filter instead.",
+		position = 18,
+		section = "private"
+	)
+	default boolean privateFilterEnabled()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "privateFilterPatterns",
+		name = "Filter",
+		description = FILTER_PATTERN_DESCRIPTION,
+		position = 19,
+		section = "private"
+	)
+	default String privateFilterPatterns()
+	{
+		return "";
 	}
 
 	// ──────────────────────────────────────────────
@@ -1183,6 +1239,31 @@ public interface ChatOverlayConfig extends Config
 		return true;
 	}
 
+	@ConfigItem(
+		keyName = "clanFilterEnabled",
+		name = "Enable Filtering",
+		description = "Apply Filter to Clan, GIM, Guest, and Friends Chat here.<br>"
+			+ "Messages in Main use Main's Filter instead.",
+		position = 23,
+		section = "clan"
+	)
+	default boolean clanFilterEnabled()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "clanFilterPatterns",
+		name = "Filter",
+		description = FILTER_PATTERN_DESCRIPTION,
+		position = 24,
+		section = "clan"
+	)
+	default String clanFilterPatterns()
+	{
+		return "";
+	}
+
 	// ──────────────────────────────────────────────
 	//  SYSTEM ALERTS  (near player or free overlay)
 	// ──────────────────────────────────────────────
@@ -1403,8 +1484,10 @@ public interface ChatOverlayConfig extends Config
 
 	@ConfigItem(
 		keyName = "filterSpamAlerts",
-		name = "Filter Spam",
-		description = "Filter out repetitive/spammy system messages using the patterns below",
+		name = "Filter Game Chat Patterns",
+		description = "Hide matching Game/system messages in Game and Main.<br>"
+			+ "Works even with the Game overlay turned off.<br>"
+			+ "Also enables duplicate cooldown when collapsing is off.",
 		position = 17,
 		section = "system"
 	)
@@ -1416,7 +1499,11 @@ public interface ChatOverlayConfig extends Config
 	@ConfigItem(
 		keyName = "filterInteractionSpam",
 		name = "Filter Interaction Failures",
-		description = "Filter out repetitive interaction block messages (e.g. 'I can't reach that', 'Nothing interesting happens')",
+		description = "Game-status messages in Game and Main.<br>Patterns:<br>"
+			+ "you can't reach that<br>i can't reach that<br>"
+			+ "nothing interesting happens<br>you can't do that right now<br>"
+			+ "please finish what you're doing<br>you need to be closer<br>"
+			+ "you can't use that here",
 		position = 18,
 		section = "system"
 	)
@@ -1428,7 +1515,13 @@ public interface ChatOverlayConfig extends Config
 	@ConfigItem(
 		keyName = "filterSkillingSpam",
 		name = "Filter Skilling Spam",
-		description = "Filter out repetitive skilling status messages (e.g. 'You swing your axe', 'You get some logs', 'You manage to mine')",
+		description = "Game-status messages in Game and Main.<br>"
+			+ "Patterns (* is a wildcard):<br>"
+			+ "you swing your axe<br>you get some * logs<br>you get some * ore<br>"
+			+ "you swing your pick<br>you manage to mine<br>you catch a<br>"
+			+ "you net a<br>you harpoon<br>you successfully cook<br>"
+			+ "you accidentally burn<br>the fire catches<br>you plant the seed<br>"
+			+ "you treat the patch<br>you bind the<br>you craft the",
 		position = 19,
 		section = "system"
 	)
@@ -1440,7 +1533,9 @@ public interface ChatOverlayConfig extends Config
 	@ConfigItem(
 		keyName = "filterCombatLootSpam",
 		name = "Filter Combat/Loot Spam",
-		description = "Filter out minor combat or loot messages (e.g. Ring of Wealth coins, retrieving ammo)",
+		description = "Game-status messages in Game and Main.<br>Patterns:<br>"
+			+ "your ring of wealth<br>you find some coins<br>"
+			+ "you retrieve your ammo<br>you drop the<br>you construct a",
 		position = 20,
 		section = "system"
 	)
@@ -1452,7 +1547,9 @@ public interface ChatOverlayConfig extends Config
 	@ConfigItem(
 		keyName = "filterConsumablesSpam",
 		name = "Filter Consumables",
-		description = "Filter out messages about eating food or drinking potions (e.g. 'You eat the shark', 'It heals some health')",
+		description = "Game-status messages in Game and Main.<br>Patterns:<br>"
+			+ "you eat the<br>you drink the<br>it heals some health<br>"
+			+ "you restore some<br>you drink some of your",
 		position = 21,
 		section = "system"
 	)
@@ -1463,10 +1560,9 @@ public interface ChatOverlayConfig extends Config
 
 	@ConfigItem(
 		keyName = "spamPatterns",
-		name = "Spam Patterns",
-		description = "Comma-separated list of patterns to filter when 'Filter Spam' is on. "
-			+ "Case-insensitive. If a pattern contains * it is treated as a wildcard (e.g. you*reach matches anything starting with 'you' and containing 'reach'). "
-			+ "Otherwise the pattern is a plain substring match.",
+		name = "Game Chat Patterns",
+		description = "Game/system messages only, in Game and Main.<br>"
+			+ "Requires Filter Game Chat Patterns.<br>" + FILTER_PATTERN_DESCRIPTION,
 		position = 22,
 		section = "system"
 	)
@@ -1483,8 +1579,11 @@ public interface ChatOverlayConfig extends Config
 
 	@ConfigItem(
 		keyName = "spamCooldownSeconds",
-		name = "Spam Cooldown (seconds)",
-		description = "Minimum seconds between identical system messages. Set to 0 to allow all duplicates.",
+		name = "Game Duplicate Cooldown (seconds)",
+		description = "Minimum seconds between identical Game/system messages.<br>"
+			+ "Requires Filter Game Chat Patterns.<br>"
+			+ "Skipped while Game chat collapsing is enabled.<br>"
+			+ "Set to 0 to allow all duplicates.",
 		position = 23,
 		section = "system"
 	)
@@ -1536,7 +1635,9 @@ public interface ChatOverlayConfig extends Config
 	@ConfigItem(
 		keyName = "filterSystemConsole",
 		name = "Filter System/Console",
-		description = "When enabled, hides plugin-generated console and unknown system messages",
+		description = "Hide console and unknown system messages.<br>"
+			+ "Applies in Game and when merged into Main.<br>"
+			+ "Does not hide broadcasts or examine text.",
 		position = 27,
 		section = "system"
 	)
@@ -1545,4 +1646,3 @@ public interface ChatOverlayConfig extends Config
 		return true;
 	}
 }
-
